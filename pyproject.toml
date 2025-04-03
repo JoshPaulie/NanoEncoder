@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "NanoEncoder"
+dynamic = ["version"]
+authors = [{ name = "JoshPaulie (Bexli)", email = "joshpaullee@gmail.com" }]
+description = "CLI app to reduce file sizes on personal media server"
+readme = "README.md"
+license = "MIT"
+keywords = ["cli", "ffmpeg", "video-encoding", "media-optimization"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Intended Audience :: End Users/Desktop",
+    "Topic :: Multimedia :: Video :: Conversion",
+]
+requires-python = ">=3.13"
+
+[project.scripts]
+nen = "nano_encoder.nano_encoder:main"
+
+[tool.hatch.version]
+path = "src/nano_encoder/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nano_encoder"]
