@@ -1,16 +1,29 @@
 import argparse
 from pathlib import Path
 
+from nano_encoder import __version__
+
 from .utils import CRF_MAX, CRF_MIN
 
 
 def create_parser() -> argparse.ArgumentParser:
+    # Primary parent parser
     parser = argparse.ArgumentParser(
         prog="NanoEncoder",
         description="A lightweight ffmpeg wrapper to reduce your video collection size (while preserving quality)",
         epilog="Please report any bugs to https://github.com/JoshPaulie/NanoEncoder/issues",
     )
 
+    # Version flag
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",  # Replace with your actual version or import from a module
+        help="Show program's version number and exit",
+    )
+
+    # Subparser
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # Encode subcommand
