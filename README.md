@@ -4,7 +4,7 @@ A lightweight ffmpeg wrapper to reduce your video collection size (while preserv
 **NanoEncoder** is for local media nerds who want to save storage space without sacrificing video quality. It provides:
 
 - Batch processing of video directories
-- Smart detection of already optimized files
+- Auto skips already optimized files
 - Detailed reporting of space savings
 - Safe cleanup of original files (only when you're ready)
 
@@ -12,12 +12,11 @@ A lightweight ffmpeg wrapper to reduce your video collection size (while preserv
 ### Requirements
 - Python 3.13+ (if not installing via `uv`)
 - [FFmpeg](https://www.ffmpeg.org/download.html) installed system-wide
-- Supported OS: macOS, Linux, Windows
 
 ### uv (Recommended)
 > [!note]
 > uv allows you to install Python apps without even having Python itself installed.
-> 
+>
 > Check it out [here](https://docs.astral.sh/uv/getting-started/installation/). This is the preferred method for my friends wanting to use the NanoEncoder
 
 ```bash
@@ -33,6 +32,11 @@ nen -h
 
 ## Usage
 The CLI has 2 commands: `encode` and `purge`. Each take a directory to transact against.
+
+> [!important]
+> When optimizing a series, it's recommended you copy a few episodes to their own folder and experiment with the `--crf` flag.
+>
+> Once you're sure you have a setting you like, you can confidently process the whole thing (assuming they're all of the same quality, like if you downloaded a series from the internet)
 
 ```bash
 nen encode '/media/series/The Office (US)' # Recursively find all videos and begin re-encoding
@@ -51,19 +55,18 @@ nen encode --crf 28 '/media/series/Berserk (1997)' # Encode at specified CRF (De
 `purge` is used to delete any original source files which have a corresponding optimized file. Meant to be ran against a directory after using `encode`.
 
 ## Features
-- Greatly reduce file sizes for videos encoded with h.264
-- Files already encoded with h.265/HEVC will also see a modest reduction in size
-- Perfectly handles multiple subtitle and audio tracks[^1]
-- Multithreading by default
-- Can determine if a file has already been optimized, and skip already-done videos
-- Rather than messing with bitrates, we apply a modest a CRF pass, set to 23 by default. Learn more [here](#about-crf)
-- High fault tolerance, meaning if you have a power outage while encoding, you can simply run the script against the same directory, and it will pick up on the video where it left off[^2]
+- **Greatly reduce file sizes** for videos by re-encoding with h.265/HEVC (even videos already with this encoding will still see a reduction in size)
+- Perfectly handles **multiple subtitle and audio tracks**[^1]
+- **CPU Multithreading** by default
+- **Smart batch processing** skips already processed videos and recovers incomplete files
+- **Dynamic bit allocation** with [CRF](#about-crf)
+- **High fault tolerance**! If you have a power outage while encoding, you can simply run the script against the same directory, and it will pick up at the video where it left off[^2]
 
 ## Safety Measures
 - No silent deletions: `purge` requires explicit user confirmation
-- User value validation: Ensures CRF values are within safe bounds
+- User input validation: Ensures CRF values are within safe bounds
 - Crash detection: Handles partially encoded files
-- Comprehensive logging: All operations recorded in NanoEncoder.log
+- Comprehensive logging: All operations recorded in `~/NanoEncoder.log`, and FFmpeg logs recorded in `~/NanoEncoder_ffmpeg.log`
 
 ## Quality of optimized videos
 Video quality will remain perceptively the same, unless it's an outrageously highly detailed source file. You may see a decrease in quality, the higher the definition. Movies and shows at 1080p are best suited for NanoEncoder.
@@ -72,17 +75,12 @@ Video quality will remain perceptively the same, unless it's an outrageously hig
 - Anime content seem to lose no noticeable loss in quality, and are the ideal usecase.
 
 ### About CRF (Constant Rate Factor)
-CRF is the primary quality/size control setting in **FFmpeg's H.265 (x265) and H.264 (x264) encoders**. It adjusts the trade-off between **file size** and **visual quality** by dynamically allocating bits where needed.  
+CRF is the primary quality/size control setting for h.265 and h.264 encoders. It adjusts the trade-off between **file size** and **visual quality** by dynamically allocating bits where needed.
 
 > [!note]
-> 🔹 CRF is **not the same as bitrate**—it adapts per scene, saving space in simpler frames while preserving detail in complex ones.
+> CRF is **not the same as bitrate**—it adapts per scene, saving space in simpler frames while preserving detail in complex ones.
 
-#### **How It Works:**  
-- **Lower CRF (e.g., 18-22)** → Higher quality, larger files (near-lossless)  
-- **Higher CRF (e.g., 23-28)** → Smaller files, slightly reduced quality (good for most uses)  
-- **Very High CRF (e.g., 30+)** → Significant compression, noticeable quality loss  
-
-#### **Recommended Values:**  
+#### Recommended Values
 | CRF   | Use Case                                     |
 | ----- | -------------------------------------------- |
 | 16-18 | Archival/master quality (large files)        |
@@ -91,12 +89,12 @@ CRF is the primary quality/size control setting in **FFmpeg's H.265 (x265) and H
 | 27-30 | Smaller files (some quality loss)            |
 | 31+   | Low-bitrate (not recommended for HD)         |
 
-NanoEncoder defaults to **CRF 23**, a sweet spot for **good compression without obvious quality loss**. Adjust based on your storage needs with the `nen encode --crf [0]` flag.
+NanoEncoder defaults to **CRF 23**. Adjust based on your storage needs with the `nen encode --crf [0]` flag.
 
 > [!warning]
 > Too low of CRF (<18) may actually INCREASE the size of your file!
-> 
-> How? Why? No idea. Just be aware.
+>
+> How? Why? No idea. Just be aware. Always perform a small sample before processing an entire series.
 
 ## ffmpeg settings
 The following command is what is ran against all found video files (though, the crf can be changed via flag[^3])
