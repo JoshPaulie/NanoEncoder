@@ -1,7 +1,7 @@
 # NanoEncoder
 A lightweight ffmpeg wrapper to reduce your video collection size (while preserving quality)
 
-**NanoEncoder** is designed for media enthusiasts who want to save storage space without sacrificing video quality. It provides:
+**NanoEncoder** is for local media nerds who want to save storage space without sacrificing video quality. It provides:
 
 - Batch processing of video directories
 - Smart detection of already optimized files
