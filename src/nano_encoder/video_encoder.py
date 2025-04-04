@@ -13,8 +13,15 @@ class VideoEncoder:
         self.input_file = video_file
         self.crf = crf
         self.output_file = self._create_output_path()
+        self._cleanup_existing_optimizing_file()
         self.encoding_duration = 0.0
         self.space_saved = 0
+
+    def _cleanup_existing_optimizing_file(self) -> None:
+        """Delete existing .optimizing file if present."""
+        if self.output_file.exists():
+            print_log(f"Found existing .optimizing file '{self.output_file.name}', deleting.")
+            self.output_file.unlink()
 
     def _create_output_path(self) -> Path:
         """Create output path with 'optimizing' status marker."""

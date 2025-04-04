@@ -27,7 +27,7 @@ def handle_encode_command(args) -> None:
         raise
 
 
-def _check_and_log_if_optimized(file_path: Path) -> bool:
+def _video_already_optimized(file_path: Path) -> bool:
     if has_optimized_version(file_path):
         print_log(f"'{file_path.name}' has optimized version. Skipping.")
         return True
@@ -40,8 +40,12 @@ def _find_video_files(directory: Path) -> List[Path]:
     for ext in VIDEO_FILE_EXTENSIONS:
         video_files.extend(directory.rglob(f"*.{ext}"))
 
-    # Filter out processed videos
-    video_files = [f for f in video_files if "optimized" not in f.name and not _check_and_log_if_optimized(f)]
+    video_files = [
+        video
+        for video in video_files
+        if all(exclude not in video.name for exclude in ["optimized", "optimizing"])
+        and not _video_already_optimized(video)
+    ]
 
     print_log(f"found {len(video_files)} original video files.\n")
     return video_files
