@@ -47,12 +47,13 @@ def _find_video_files(directory: Path) -> List[Path]:
         and not _video_already_optimized(video)
     ]
 
-    print_log(f"found {len(video_files)} original video files.\n")
+    print(f"found {len(video_files)} original video files.")
+    print_log(f"Found {len(video_files)} original video files in '{directory.name}'", log_only=True)
     return video_files
 
 
 def process_directory(directory: Path, crf: int) -> None:
-    print_log(f"Starting processing for '{directory}'")
+    print_log(f"Starting processing for '{directory}'..")
     start_time = time.perf_counter()
     total_saved = 0
     video_files = _find_video_files(directory)

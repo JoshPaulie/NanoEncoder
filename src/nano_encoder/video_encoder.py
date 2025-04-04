@@ -20,7 +20,7 @@ class VideoEncoder:
     def _cleanup_existing_optimizing_file(self) -> None:
         """Delete existing .optimizing file if present."""
         if self.output_file.exists():
-            print_log(f"Found existing .optimizing file '{self.output_file.name}', deleting.")
+            print_log(f"Found existing .optimizing file '{self.output_file.name}', deleted.")
             self.output_file.unlink()
 
     def _create_output_path(self) -> Path:
