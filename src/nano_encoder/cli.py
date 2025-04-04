@@ -19,8 +19,8 @@ def create_parser() -> argparse.ArgumentParser:
         "-v",
         "--version",
         action="version",
-        version=f"%(prog)s {__version__}",  # Replace with your actual version or import from a module
-        help="Show program's version number and exit",
+        version=f"%(prog)s {__version__}",
+        help="Print NanoEncoder version and exit",
     )
 
     # Subparser
