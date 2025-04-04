@@ -59,11 +59,6 @@ def process_directory(directory: Path, crf: int) -> None:
     video_files = _find_video_files(directory)
 
     for video in video_files:
-        if "optimizing" in video.name:
-            print_log(f"Encountered unfinished file: '{video.name}'. Deleting.")
-            video.unlink()
-            continue
-
         try:
             encoder = VideoEncoder(video, crf)
             encoder.encode()
