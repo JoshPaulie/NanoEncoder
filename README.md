@@ -20,7 +20,16 @@ A lightweight ffmpeg wrapper to reduce your video collection size (while preserv
 > Check it out [here](https://docs.astral.sh/uv/getting-started/installation/). This is the preferred method for my friends wanting to use the NanoEncoder
 
 ```bash
+# Install latest version
 uv tool install git+https://github.com/JoshPaulie/NanoEncoder.git
+
+# Update installation to latest
+uv tool upgrade nanoencoder
+
+# Uninstall NanoEncoder
+uv tool uninstall nanoencoder
+
+# Verify functionality
 nen -h
 ```
 
