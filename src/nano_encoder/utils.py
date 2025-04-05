@@ -76,5 +76,5 @@ def has_optimized_version(file_path: Path) -> bool:
     """
     Predicate to see if source video has accompanying optimized video
     """
-    optimized_path = file_path.with_name(f"{file_path.stem}.optimized{file_path.suffix}")
+    optimized_path = file_path.with_stem(f"{file_path.stem}.optimized")
     return optimized_path.exists()
