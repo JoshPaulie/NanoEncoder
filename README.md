@@ -1,6 +1,9 @@
 # NanoEncoder
 A lightweight ffmpeg wrapper to reduce your video collection size (while preserving quality)
 
+> [!warning]
+> Core functionality works, customization features and logging chnages underway. Project in "Beta", feedback on small sample sizes welcome. Refrain from running on large portions of your media until full first release (with PyPI release) 😄
+
 **NanoEncoder** is for local media nerds who want to save storage space without sacrificing video quality. It provides:
 
 - Batch processing of video directories
