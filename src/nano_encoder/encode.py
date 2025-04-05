@@ -63,7 +63,7 @@ def process_directory(directory: Path, crf: int) -> None:
             encoder = VideoEncoder(video, crf)
             encoder.encode()
             print_log(encoder.generate_report())
-            total_saved += encoder.space_saved
+            total_saved += abs(encoder.space_saved)
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             print_log(f"Failed to process {video}: {str(e)}", "error")
 
