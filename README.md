@@ -71,11 +71,10 @@ nen encode --crf 28 '/media/series/Berserk (1997)' # Encode at specified CRF (De
 - **Dynamic bit allocation** with [CRF](#about-crf)
 - **High fault tolerance**! If you have a power outage while encoding, you can simply run the script against the same directory, and it will pick up at the video where it left off[^2]
 
-## Safety Measures
+### Safety Measures
 - No silent deletions: `purge` requires explicit user confirmation
-- User input validation: Ensures CRF values are within safe bounds
 - Crash detection: Handles partially encoded files
-- Comprehensive logging: All operations recorded in `~/NanoEncoder.log`, and FFmpeg logs recorded in `~/NanoEncoder_ffmpeg.log`
+- Comprehensive logging: All operations are recorded in `~/NanoEncoder.log`, and FFmpeg logs  arerecorded in `~/NanoEncoder_ffmpeg.log`
 
 ## Quality of optimized videos
 Video quality will remain perceptively the same, unless it's an outrageously highly detailed source file. You may see a decrease in quality, the higher the definition. Movies and shows at 1080p are best suited for NanoEncoder.
