@@ -10,12 +10,20 @@ class VideoEncoder:
     """Handles video encoding operations using ffmpeg."""
 
     def __init__(self, video_file: Path, crf: int) -> None:
+        # User args
         self.input_file = video_file
         self.crf = crf
-        self.output_file = self._create_output_path()
+
+        # The resulting "encoded" or "output" file. Starts with ".optimizing" label
+        self.output_file = self._create_optimizing_output_path()
+
+        # Remove unfinished field if present
         self._cleanup_existing_optimizing_file()
+
+        # Stats for report
+        self.original_size = self.input_file.stat().st_size
         self.encoding_duration = 0.0
-        self.space_saved = 0
+        self.disk_space_change = 0
 
     def _cleanup_existing_optimizing_file(self) -> None:
         """Delete existing .optimizing file if present."""
@@ -23,7 +31,7 @@ class VideoEncoder:
             print_log(f"Found existing .optimizing file '{self.output_file.name}', deleted.")
             self.output_file.unlink()
 
-    def _create_output_path(self) -> Path:
+    def _create_optimizing_output_path(self) -> Path:
         """Create output path with 'optimizing' status marker."""
         return self.input_file.with_name(f"{self.input_file.stem}.optimizing{self.input_file.suffix}")
 
@@ -61,9 +69,8 @@ class VideoEncoder:
         if not self.output_file.exists():
             raise FileNotFoundError("Encoded file not created")
 
-        original_size = self.input_file.stat().st_size
-        encoded_size = self.output_file.stat().st_size
-        self.space_saved = original_size - encoded_size
+        self.encoded_size = self.output_file.stat().st_size
+        self.disk_space_change = self.original_size - self.encoded_size
 
     def _rename_final_output(self) -> None:
         """Finalize file name by changing .optimizing.ext → .optimized.ext"""
@@ -73,16 +80,14 @@ class VideoEncoder:
 
     def generate_report(self) -> List[str]:
         """Generate encoding results report."""
-        original_size = self.input_file.stat().st_size
-        encoded_size = self.output_file.stat().st_size
         speed_factor = self._get_video_duration() / self.encoding_duration
 
         return [
             f"Finished encoding '{self.input_file.name}'.",
             f"Duration: {humanize_duration(self.encoding_duration)} ({speed_factor:.2f}x).",
-            f"Size: {humanize_file_size(original_size)} → {humanize_file_size(encoded_size)}.",
-            f"Disk space: {humanize_file_size(abs(self.space_saved))} "
-            f"({'saved' if self.space_saved > 0 else 'increased'}).",
+            f"Size: {humanize_file_size(self.original_size)} → {humanize_file_size(self.encoded_size)}.",
+            f"Disk space: {humanize_file_size(abs(self.disk_space_change))} "
+            f"({'saved' if self.disk_space_change > 0 else 'increased'}).",
         ]
 
     def _get_video_duration(self) -> float:
