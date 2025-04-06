@@ -19,6 +19,8 @@ classifiers = [
 ]
 requires-python = ">=3.13"
 
+dependencies = ["rich>=14.0.0"]
+
 [project.scripts]
 nen = "nano_encoder.nano_encoder:main"
 
