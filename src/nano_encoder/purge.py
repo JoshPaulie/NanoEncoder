@@ -1,18 +1,11 @@
 from pathlib import Path
 from typing import List, Optional
 
-from .utils import VIDEO_FILE_EXTENSIONS, has_optimized_version, print_log
+from .utils import VIDEO_FILE_EXTENSIONS, find_all_video_files, has_optimized_version, print_log
 
 
 def handle_purge_command(args) -> None:
     purge_originals(args.directory)
-
-
-def _find_all_video_files(directory: Path) -> List[Path]:
-    video_files = []
-    for ext in VIDEO_FILE_EXTENSIONS:
-        video_files.extend(directory.rglob(f"*.{ext}"))
-    return video_files
 
 
 def _find_originals_to_purge(directory: Path) -> List[Path]:
@@ -28,7 +21,7 @@ def _find_originals_to_purge(directory: Path) -> List[Path]:
 
 
 def _has_unfinished_video(directory: Path) -> Optional[Path]:
-    videos = _find_all_video_files(directory)
+    videos = find_all_video_files(directory)
     for video in videos:
         if ".optimizing." in video.name:
             return video
