@@ -23,7 +23,7 @@ logger.addHandler(file_handler)
 # --- Utility Functions ---
 def print_log(
     message: str | List[str],
-    log_level: Literal["error", "info"] = "info",
+    log_level: Literal["error", "info", "debug"] = "info",
     log_only: bool = False,
 ) -> None:
     """
