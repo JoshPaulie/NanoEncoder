@@ -44,4 +44,20 @@ def create_parser() -> argparse.ArgumentParser:
     )
     purge_parser.add_argument("directory", type=Path, help="Path to the target directory")
 
+    # Healthcheck subcommand
+    health_check_parser = subparsers.add_parser(
+        "health", help="After encoding, check the quality of your optimized files"
+    )
+    health_check_parser.add_argument(
+        "directory",
+        type=Path,
+        help="Check a small sample of source and optimized files, comparing similarity",
+    )
+    health_check_parser.add_argument(
+        "--sample-ratio",
+        type=float,
+        help="",
+        default=0.05,
+    )
+
     return parser

@@ -1,10 +1,10 @@
 import logging
 import math
 from pathlib import Path
-from typing import List, Literal
+from typing import Literal
 
 # --- Constants ---
-VIDEO_FILE_EXTENSIONS: List[str] = ["mov", "mkv", "mp4"]
+VIDEO_FILE_EXTENSIONS: list[str] = ["mov", "mkv", "mp4"]
 CRF_MIN: int = 0
 CRF_MAX: int = 51
 
@@ -22,7 +22,7 @@ logger.addHandler(file_handler)
 
 # --- Utility Functions ---
 def print_log(
-    message: str | List[str],
+    message: str | list[str],
     log_level: Literal["error", "info", "debug"] = "info",
     log_only: bool = False,
 ) -> None:
@@ -73,9 +73,30 @@ def validate_directory(path: Path) -> None:
         raise NotADirectoryError(f"{path} is not a directory")
 
 
-def has_optimized_version(file_path: Path) -> bool:
+def has_optimized_version(file_path: Path) -> None | Path:
     """
-    Predicate to see if source video has accompanying optimized video
+    Check if source video has accompanying optimized video, and return it if so
     """
     optimized_path = file_path.with_stem(f"{file_path.stem}.optimized")
-    return optimized_path.exists()
+    if optimized_path.exists():
+        return optimized_path
+    return None
+
+
+def find_all_video_files(directory: Path, source_only: bool = False) -> list[Path]:
+    video_files: list[Path] = []
+    for ext in VIDEO_FILE_EXTENSIONS:
+        video_files.extend(directory.rglob(f"*.{ext}"))
+
+    if source_only:
+        video_files = [video for video in video_files if "optimized" not in video.name]
+
+    return video_files
+
+
+def directory_fully_processed(directory: Path):
+    video_files = find_all_video_files(directory, source_only=True)
+    for video in video_files:
+        if not has_optimized_version(video):
+            return False
+    return True

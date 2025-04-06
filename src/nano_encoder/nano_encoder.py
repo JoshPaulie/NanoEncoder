@@ -4,6 +4,7 @@ import traceback
 
 from .cli import create_parser
 from .encode import handle_encode_command
+from .healthcheck import handle_health_command
 from .purge import handle_purge_command
 from .utils import print_log
 
@@ -37,6 +38,8 @@ def main() -> None:
                 handle_encode_command(args)
             case "purge":
                 handle_purge_command(args)
+            case "health":
+                handle_health_command(args)
     except Exception as e:
         if args.dev:
             traceback.print_exc()
