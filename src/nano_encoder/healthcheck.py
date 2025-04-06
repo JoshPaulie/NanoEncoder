@@ -16,7 +16,7 @@ def handle_health_command(args) -> None:
         raise
 
 
-def pair_videos(directory: Path) -> list[tuple[Path, Path]]:
+def _pair_videos(directory: Path) -> list[tuple[Path, Path]]:
     pairs: list[tuple[Path, Path]] = []
     source_videos_files = find_all_video_files(directory, source_only=True)
     for source_video in source_videos_files:
@@ -26,11 +26,11 @@ def pair_videos(directory: Path) -> list[tuple[Path, Path]]:
 
 
 # todo: sample size needs to be an arg, probably an int
-def get_sample(directory: Path, sample_size: float = 0.5):
+def _get_sample(directory: Path, sample_size: float = 0.5):
     """
     sample_size: % of directory we'd like to check
     """
-    video_pairs = pair_videos(directory)
+    video_pairs = _pair_videos(directory)
     size_for_pairs = math.floor(len(video_pairs) * sample_size) or 1
     sample = random.choices(video_pairs, k=size_for_pairs)
     return sample
@@ -60,10 +60,10 @@ def _grade_ssim(score: float) -> str:
 
 
 def check_directory_health(directory: Path):
-    sample = get_sample(directory)
+    sample = _get_sample(directory)
     for source_video, optimized_video in sample:
         print_log(f"Checking the health of '{source_video.name}' & '{optimized_video.name}'..")
-        ssim = ssim_compare_videos(source_video, optimized_video)
+        ssim = _ssim_compare_videos(source_video, optimized_video)
         print_log(f"'{source_video.name}' & '{optimized_video.name}' = {ssim} SSIM", log_only=True)
         print(
             (
@@ -73,7 +73,7 @@ def check_directory_health(directory: Path):
         )
 
 
-def ssim_compare_videos(source_file: Path, optimized_file: Path) -> float:
+def _ssim_compare_videos(source_file: Path, optimized_file: Path) -> float:
     command = [
         "ffmpeg",
         *["-i", str(source_file)],
