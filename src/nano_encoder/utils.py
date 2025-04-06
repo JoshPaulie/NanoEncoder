@@ -55,10 +55,11 @@ def humanize_file_size(size_bytes: int) -> str:
         raise ValueError("File size cannot be negative")
     size = float(size_bytes)
     units = ["bytes", "KB", "MB", "GB"]
-    for unit in units[:-1]:
+    for unit in units:
         if size < 1024:
             break
-        size /= 1024
+        if unit != units[-1]:
+            size /= 1024
     return f"{size:.2f} {unit}" if unit != "bytes" else f"{int(size)} {unit}"
 
 
