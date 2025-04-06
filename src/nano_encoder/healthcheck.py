@@ -10,7 +10,7 @@ from .utils import DEBUG_LOG_FILE, find_all_video_files, has_optimized_version, 
 def handle_health_command(args) -> None:
     try:
         validate_directory(args.directory)
-        check_directory_health(args.directory)
+        check_directory_health(args.directory, args.sample_ratio)
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
         print_log(str(e), "error")
         raise
@@ -25,19 +25,20 @@ def _pair_videos(directory: Path) -> list[tuple[Path, Path]]:
     return pairs
 
 
-# todo: sample size needs to be an arg, probably an int
-def _get_sample(directory: Path, sample_size: float = 0.5):
+def _get_sample(directory: Path, sample_ratio: float) -> list[tuple[Path, Path]]:
     """
     sample_size: % of directory we'd like to check
     """
     video_pairs = _pair_videos(directory)
-    size_for_pairs = math.floor(len(video_pairs) * sample_size) or 1
-    sample = random.choices(video_pairs, k=size_for_pairs)
+    sample_size = math.floor(len(video_pairs) * sample_ratio) or 1
+    sample = random.choices(video_pairs, k=sample_size)
     return sample
 
 
 def _grade_ssim(score: float) -> str:
-    if score >= 0.99:
+    if score == 1.0:
+        return "Identical"
+    elif score >= 0.99:
         return "Excellent (visually identical)"
     elif score >= 0.97:
         return "Very Good (nearly indistinguishable)"
@@ -59,11 +60,11 @@ def _grade_ssim(score: float) -> str:
         return "Garbage (not visually usable)"
 
 
-def check_directory_health(directory: Path):
-    sample = _get_sample(directory)
+def check_directory_health(directory: Path, sample_ratio: float):
+    sample = _get_sample(directory, sample_ratio)
     for source_video, optimized_video in sample:
         print_log(f"Checking the health of '{source_video.name}' & '{optimized_video.name}'..")
-        ssim = _ssim_compare_videos(source_video, optimized_video)
+        ssim = _compare_videos_ssim(source_video, optimized_video)
         print_log(f"'{source_video.name}' & '{optimized_video.name}' = {ssim} SSIM", log_only=True)
         print(
             (
@@ -73,7 +74,7 @@ def check_directory_health(directory: Path):
         )
 
 
-def _ssim_compare_videos(source_file: Path, optimized_file: Path) -> float:
+def _compare_videos_ssim(source_file: Path, optimized_file: Path) -> float:
     command = [
         "ffmpeg",
         *["-i", str(source_file)],
@@ -97,4 +98,7 @@ def _ssim_compare_videos(source_file: Path, optimized_file: Path) -> float:
         log_file.write(process.stderr)
 
     matches = re.findall(r"All:(\d+\.\d+)", process.stderr)
+
+    if not matches:
+        raise ValueError("SSIM score not found in ffmpeg output")
     return float(matches[-1])
