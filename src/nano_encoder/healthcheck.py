@@ -36,12 +36,41 @@ def get_sample(directory: Path, sample_size: float = 0.5):
     return sample
 
 
+def _grade_ssim(score: float) -> str:
+    if score >= 0.99:
+        return "Excellent (visually identical)"
+    elif score >= 0.97:
+        return "Very Good (nearly indistinguishable)"
+    elif score >= 0.95:
+        return "Good (minor perceptual differences)"
+    elif score >= 0.90:
+        return "Fair (noticeable but acceptable loss)"
+    elif score >= 0.85:
+        return "Poor (visible degradation)"
+    elif score >= 0.70:
+        return "Bad (significant artifacts)"
+    elif score >= 0.50:
+        return "Very Bad (low fidelity)"
+    elif score >= 0.30:
+        return "Unusable (heavily degraded)"
+    elif score >= 0.10:
+        return "Broken (barely recognizable)"
+    else:
+        return "Garbage (not visually usable)"
+
+
 def check_directory_health(directory: Path):
     sample = get_sample(directory)
     for source_video, optimized_video in sample:
         print_log(f"Checking the health of '{source_video.name}' & '{optimized_video.name}'..")
-        result = ssim_compare_videos(source_video, optimized_video)
-        print(f"'{source_video.name}' & '{optimized_video.name}' = {round(result, 3) * 100}%")
+        ssim = ssim_compare_videos(source_video, optimized_video)
+        print_log(f"'{source_video.name}' & '{optimized_video.name}' = {ssim} SSIM", log_only=True)
+        print(
+            (
+                f"'{source_video.name}' & '{optimized_video.name}' are "
+                f"{_grade_ssim(ssim).lower()} [{round(ssim, 3) * 100}%]"
+            )
+        )
 
 
 def ssim_compare_videos(source_file: Path, optimized_file: Path) -> float:
