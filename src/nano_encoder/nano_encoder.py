@@ -1,5 +1,6 @@
 import shutil
 import sys
+import traceback
 
 from .cli import create_parser
 from .encode import handle_encode_command
@@ -37,6 +38,8 @@ def main() -> None:
             case "purge":
                 handle_purge_command(args)
     except Exception as e:
+        if args.dev:
+            traceback.print_exc()
         parser.exit(1, str(e) + "\n")
 
 

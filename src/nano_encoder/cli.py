@@ -23,6 +23,8 @@ def create_parser() -> argparse.ArgumentParser:
         help="Print NanoEncoder version and exit",
     )
 
+    parser.add_argument("--dev", action="store_true", help="Include full stacktrace on error")
+
     # Subparser
     subparsers = parser.add_subparsers(dest="command", required=True)
 
