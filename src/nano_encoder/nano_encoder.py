@@ -31,10 +31,11 @@ def main() -> None:
     ffmpeg_check()
 
     try:
-        if args.command == "encode":
-            handle_encode_command(args)
-        elif args.command == "purge":
-            handle_purge_command(args)
+        match args.command:
+            case "encode":
+                handle_encode_command(args)
+            case "purge":
+                handle_purge_command(args)
     except Exception as e:
         parser.exit(1, str(e) + "\n")
 
