@@ -4,7 +4,8 @@ import re
 import subprocess
 from pathlib import Path
 
-from .utils import DEBUG_LOG_FILE, find_all_video_files, has_optimized_version, print_log, validate_directory
+from .logger import DEBUG_LOG_FILE, logger
+from .utils import find_all_video_files, has_optimized_version, validate_directory
 
 
 def handle_health_command(args) -> None:
@@ -12,7 +13,7 @@ def handle_health_command(args) -> None:
         validate_directory(args.directory)
         check_directory_health(args.directory, args.sample_ratio)
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
-        print_log(str(e), "error")
+        logger.error(str(e))
         raise
 
 
@@ -63,9 +64,10 @@ def _grade_ssim(score: float) -> str:
 def check_directory_health(directory: Path, sample_ratio: float):
     sample = _get_sample(directory, sample_ratio)
     for source_video, optimized_video in sample:
-        print_log(f"Checking the health of '{source_video.name}' & '{optimized_video.name}'..")
+        print(f"Checking the health of '{source_video.name}' & '{optimized_video.name}'..")
+        logger.info(f"Begging SSIM comparison for '{source_video.name}' & '{optimized_video.name}'.")
         ssim = _compare_videos_ssim(source_video, optimized_video)
-        print_log(f"'{source_video.name}' & '{optimized_video.name}' = {ssim} SSIM", log_only=True)
+        logger.info(f"'{source_video.name}' & '{optimized_video.name}' = {ssim} SSIM", log_only=True)
         print(
             (
                 f"'{source_video.name}' & '{optimized_video.name}' are "
@@ -92,7 +94,7 @@ def _compare_videos_ssim(source_file: Path, optimized_file: Path) -> float:
             check=True,
         )
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
-        print_log(f"Failed to compare {source_file.name} & {optimized_file.name}: {str(e)}", "error")
+        logger.error(f"Failed to compare {source_file.name} & {optimized_file.name}: {str(e)}")
 
     with open(DEBUG_LOG_FILE, "a") as log_file:
         log_file.write(process.stderr)

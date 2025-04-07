@@ -1,7 +1,5 @@
-import logging
 import math
 from pathlib import Path
-from typing import Literal
 
 from .exceptions import EmptyDirectory
 
@@ -10,36 +8,8 @@ VIDEO_FILE_EXTENSIONS: list[str] = ["mov", "mkv", "mp4"]
 CRF_MIN: int = 0
 CRF_MAX: int = 51
 
-# --- Logging Setup ---
-NANO_ENCODER_LOG_FILE: Path = Path.cwd() / "NanoEncoder.log"
-DEBUG_LOG_FILE: Path = Path.cwd() / "NanoEncoder_ffmpeg.log"
-
-logger: logging.Logger = logging.getLogger("NanoEncoder")
-logger.setLevel(logging.INFO)
-file_handler: logging.FileHandler = logging.FileHandler(NANO_ENCODER_LOG_FILE)
-formatter: logging.Formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
-
 
 # --- Utility Functions ---
-def print_log(
-    message: str | list[str],
-    log_level: Literal["error", "info", "debug"] = "info",
-    log_only: bool = False,
-) -> None:
-    """
-    Helper for when information needs relayed to use and logged
-    """
-    if isinstance(message, list):
-        message = " ".join(message)
-
-    getattr(logger, log_level)(message)
-
-    if not log_only:
-        print(message)
-
-
 def humanize_duration(seconds: float) -> str:
     """
     Converts seconds to minutes & seconds, pretty much divmod() but for floats

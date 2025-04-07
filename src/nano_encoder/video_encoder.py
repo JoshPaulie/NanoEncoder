@@ -3,7 +3,8 @@ import time
 from pathlib import Path
 from typing import List
 
-from .utils import DEBUG_LOG_FILE, humanize_duration, humanize_file_size, print_log
+from .logger import DEBUG_LOG_FILE, logger
+from .utils import humanize_duration, humanize_file_size
 
 
 class VideoEncoder:
@@ -28,7 +29,9 @@ class VideoEncoder:
     def _cleanup_existing_optimizing_file(self) -> None:
         """Delete existing .optimizing file if present."""
         if self.output_file.exists():
-            print_log(f"Found existing .optimizing file '{self.output_file.name}', deleted.")
+            message = f"Found existing .optimizing file '{self.output_file.name}', deleted."
+            print(message)
+            logger.info(message)
             self.output_file.unlink()
 
     def _create_optimizing_output_path(self) -> Path:
@@ -56,7 +59,10 @@ class VideoEncoder:
             str(self.output_file),
         ]
 
-        print_log(f"Starting encoding for '{self.input_file.name}'..")
+        start_message = f"Starting encoding for '{self.input_file.name}'.."
+        print(start_message)
+        logger.info(start_message)
+
         start_time = time.perf_counter()
 
         with open(DEBUG_LOG_FILE, "a") as log_file:

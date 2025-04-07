@@ -5,8 +5,8 @@ import traceback
 from .cli import create_parser
 from .encode import handle_encode_command
 from .healthcheck import handle_health_command
+from .logger import logger
 from .purge import handle_purge_command
-from .utils import print_log
 
 
 def welcome_message() -> None:
@@ -20,8 +20,11 @@ def ffmpeg_check() -> None:
     required_apps = ["ffmpeg", "ffprobe"]
     for app in required_apps:
         if not shutil.which(app):
-            print_log(f"NanoEncoder depends on {app}, which is not installed on this system.", "error")
+            print(f"NanoEncoder depends on {app}, which is not installed on this system.")
             print("Install from here: https://www.ffmpeg.org/download.html")
+            if app == "ffprobe":
+                print("The ffprobe binary is included with the FFmpeg installation.")
+            logger.error(f"System doesn't have {app} installed.")
             sys.exit(1)
 
 

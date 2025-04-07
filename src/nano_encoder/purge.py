@@ -1,7 +1,8 @@
 from pathlib import Path
 from typing import List, Optional
 
-from .utils import VIDEO_FILE_EXTENSIONS, find_all_video_files, has_optimized_version, print_log
+from .logger import logger
+from .utils import VIDEO_FILE_EXTENSIONS, find_all_video_files, has_optimized_version
 
 
 def handle_purge_command(args) -> None:
@@ -30,20 +31,20 @@ def _has_unfinished_video(directory: Path) -> Optional[Path]:
 
 def purge_originals(directory: Path) -> None:
     if unfinished_video := _has_unfinished_video(directory):
-        print_log(
-            f"Encountered unfinished video: '{unfinished_video}', unable to purge originals. Remove this file, or re-run the encode command against the directory to resolve.",
-            "error",
-        )
+        error_message = f"Encountered unfinished video: '{unfinished_video}', unable to purge originals. Remove this file, or re-run the encode command against the directory to resolve."
+        print(error_message)
+        logger.error(error_message)
         print(f"\nSuggested fix:\nnen encode {directory.absolute()}")
         return
 
     originals = _find_originals_to_purge(directory)
 
     if not originals:
-        print_log(f"No originals with optimized versions found in '{directory.name}'")
+        no_originals_message = f"No originals with optimized versions found in '{directory.name}'"
+        print(no_originals_message)
         return
 
-    print_log(f"Found the following to purge: {', '.join([p.name for p in originals])}", log_only=True)
+    logger.info(f"Found the following to purge: {', '.join([p.name for p in originals])}")
     print(f"Found {len(originals)} originals with optimized versions:")
     for orig in originals:
         print(f" - {orig.name} -> {orig.with_name(f'{orig.stem}.optimized{orig.suffix}').name}")
@@ -51,12 +52,15 @@ def purge_originals(directory: Path) -> None:
 
     confirm = input("Confirm deletion of these ORIGINAL files? (Cannot be undone) [y/n]: ").lower()
     if confirm != "y":
-        print_log("Deletion cancelled by user.")
+        print("Deletion cancelled by user.")
+        logger.info("User declined to purge originals.")
         return
 
     for orig in originals:
         print(f"Deleting '{orig}'.")
-        print_log(f"Purged '{orig}'.", log_only=True)
+        logger.info(f"Purged '{orig}'.")
         orig.unlink()
 
-    print_log(f"Purged {len(originals)} original files")
+    purged_message = f"Purged {len(originals)} original files"
+    print(purged_message)
+    logger.info(purged_message)

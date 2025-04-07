@@ -3,6 +3,7 @@ import time
 from pathlib import Path
 from typing import List
 
+from .logger import logger
 from .utils import (
     CRF_MAX,
     CRF_MIN,
@@ -10,7 +11,6 @@ from .utils import (
     has_optimized_version,
     humanize_duration,
     humanize_file_size,
-    print_log,
     validate_directory,
 )
 from .video_encoder import VideoEncoder
@@ -23,13 +23,14 @@ def handle_encode_command(args) -> None:
             raise ValueError(f"CRF must be between {CRF_MIN} and {CRF_MAX}")
         process_directory(args.directory.resolve(), args.crf)
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
-        print_log(str(e), "error")
+        logger.error(str(e))
         raise
 
 
 def _video_already_optimized(file_path: Path) -> bool:
     if has_optimized_version(file_path):
-        print_log(f"'{file_path.name}' has optimized version. Skipping.")
+        logger.info(f"'{file_path.name}' has optimized version. Skipping.")
+        print(f"'{file_path.name}' has optimized version. Skipping.")
         return True
     return False
 
@@ -48,12 +49,12 @@ def _find_video_files(directory: Path) -> List[Path]:
     ]
 
     print(f"found {len(video_files)} original video files.")
-    print_log(f"Found {len(video_files)} original video files in '{directory.name}'", log_only=True)
+    logger.info(f"Found {len(video_files)} original video files in '{directory.name}'")
     return video_files
 
 
 def process_directory(directory: Path, crf: int) -> None:
-    print_log(f"Starting processing for '{directory}'..")
+    logger.info(f"Starting processing for '{directory}'..")
     start_time = time.perf_counter()
     total_saved = 0
     video_files = _find_video_files(directory)
@@ -62,10 +63,12 @@ def process_directory(directory: Path, crf: int) -> None:
         try:
             encoder = VideoEncoder(video, crf)
             encoder.encode()
-            print_log(encoder.generate_report())
+            report = encoder.generate_report()
+            print(report)
+            logger.info(report)
             total_saved += encoder.disk_space_change
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            print_log(f"Failed to process {video}: {str(e)}", "error")
+            logger.error(f"Failed to process '{video}': {str(e)}")
 
     duration = time.perf_counter() - start_time
 
@@ -75,5 +78,7 @@ def process_directory(directory: Path, crf: int) -> None:
         f"Total disk space: {humanize_file_size(abs(total_saved))} "
         f"({'saved' if total_saved > 0 else 'increased'}).",
     ]
+
     print()
-    print_log(report)
+    print(report)
+    logger.info(report)
