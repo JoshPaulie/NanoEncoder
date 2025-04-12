@@ -1,9 +1,9 @@
 import subprocess
 import time
 from pathlib import Path
-from typing import List
 
-from .utils import DEBUG_LOG_FILE, humanize_duration, humanize_file_size, print_log
+from .logger import DEBUG_LOG_FILE, logger
+from .utils import humanize_duration, humanize_file_size
 
 
 class VideoEncoder:
@@ -28,7 +28,7 @@ class VideoEncoder:
     def _cleanup_existing_optimizing_file(self) -> None:
         """Delete existing .optimizing file if present."""
         if self.output_file.exists():
-            print_log(f"Found existing .optimizing file '{self.output_file.name}', deleted.")
+            logger.info(f"Deleted partially completed file '{self.output_file.name}'.")
             self.output_file.unlink()
 
     def _create_optimizing_output_path(self) -> Path:
@@ -40,6 +40,7 @@ class VideoEncoder:
         self._run_ffmpeg()
         self._validate_output()
         self._rename_final_output()
+        self._log_report()
 
     def _run_ffmpeg(self) -> None:
         """Execute ffmpeg command with configured parameters."""
@@ -56,7 +57,8 @@ class VideoEncoder:
             str(self.output_file),
         ]
 
-        print_log(f"Starting encoding for '{self.input_file.name}'..")
+        logger.info(f"Starting encoding for '{self.input_file.name}'.")
+
         start_time = time.perf_counter()
 
         with open(DEBUG_LOG_FILE, "a") as log_file:
@@ -78,17 +80,19 @@ class VideoEncoder:
         self.output_file.rename(final_name)
         self.output_file = final_name
 
-    def generate_report(self) -> List[str]:
+    def _log_report(self) -> None:
         """Generate encoding results report."""
         speed_factor = self._get_video_duration() / self.encoding_duration
 
-        return [
+        report = [
             f"Finished encoding '{self.input_file.name}'.",
             f"Duration: {humanize_duration(self.encoding_duration)} ({speed_factor:.2f}x).",
             f"Size: {humanize_file_size(self.original_size)} → {humanize_file_size(self.encoded_size)}.",
             f"Disk space: {humanize_file_size(abs(self.disk_space_change))} "
             f"({'saved' if self.disk_space_change > 0 else 'increased'}).",
         ]
+
+        logger.info(report)
 
     def _get_video_duration(self) -> float:
         """Get video duration using ffprobe."""

@@ -56,8 +56,13 @@ def create_parser() -> argparse.ArgumentParser:
     health_check_parser.add_argument(
         "--sample-ratio",
         type=float,
-        help="",
+        help="Percentage of video to check (ignored if --all is set)",
         default=0.05,
+    )
+    health_check_parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Check all video pairs rather than a sample",
     )
 
     return parser

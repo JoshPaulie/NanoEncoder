@@ -1,3 +1,5 @@
+set quiet
+
 # Reset sample directory, clear logs and reprocess it
 encode-test-videos-clean:
     rm -fr videos
