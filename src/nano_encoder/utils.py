@@ -12,10 +12,14 @@ CRF_MAX: int = 51
 # --- Utility Functions ---
 def humanize_duration(seconds: float) -> str:
     """
-    Converts seconds to minutes & seconds, pretty much divmod() but for floats
+    Converts seconds to hours, minutes & seconds, pretty much divmod() but for floats
     """
-    minutes = seconds // 60
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
     seconds = math.floor(seconds % 60)
+
+    if hours:
+        return f"{hours}h {minutes}m {seconds}s"
     return f"{minutes}m {seconds}s"
 
 
