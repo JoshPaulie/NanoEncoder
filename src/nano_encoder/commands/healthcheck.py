@@ -4,13 +4,17 @@ import re
 import subprocess
 from pathlib import Path
 
+from rich import box
 from rich.progress import (
+    BarColumn,
     Progress,
     SpinnerColumn,
     TaskProgressColumn,
     TextColumn,
     TimeElapsedColumn,
 )
+from rich.table import Table
+from rich.text import Text
 
 from ..console import console
 from ..logger import DEBUG_LOG_FILE, logger
@@ -35,7 +39,8 @@ class HealthChecker:
     ProgressBar = Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
-        TaskProgressColumn(),
+        BarColumn(),
+        TaskProgressColumn(highlighter=None),
         TimeElapsedColumn(),
         expand=True,
     )
@@ -71,31 +76,6 @@ class HealthChecker:
         sample_size = math.floor(len(video_pairs) * self.sample_ratio) or 1
         return random.choices(video_pairs, k=sample_size)
 
-    def _grade_ssim(self, score: float) -> str:
-        """Grades the SSIM score into descriptive text."""
-        if score == 1.0:
-            return "Identical"
-        elif score >= 0.99:
-            return "Excellent (visually identical)"
-        elif score >= 0.97:
-            return "Very Good (nearly indistinguishable)"
-        elif score >= 0.95:
-            return "Good (minor perceptual differences)"
-        elif score >= 0.90:
-            return "Fair (noticeable but acceptable loss)"
-        elif score >= 0.85:
-            return "Poor (visible degradation)"
-        elif score >= 0.70:
-            return "Bad (significant artifacts)"
-        elif score >= 0.50:
-            return "Very Bad (low fidelity)"
-        elif score >= 0.30:
-            return "Unusable (heavily degraded)"
-        elif score >= 0.10:
-            return "Broken (barely recognizable)"
-        else:
-            return "Garbage (not visually usable)"
-
     def _compare_videos_ssim(self, original_file: Path, optimized_file: Path) -> float:
         """Perform an SSIM comparison using ffmpeg between a original and optimized video."""
         command = [
@@ -126,41 +106,36 @@ class HealthChecker:
             raise ValueError("SSIM score not found in ffmpeg output")
         return float(matches[-1])
 
-    def _all_done_message(self):
-        console.print(f"\n[green]All done[/] checking the health of {self.directory}!")
-        console.print("Your results can be viewed above, but also at:")
-        console.print(DEBUG_LOG_FILE.absolute())
-
     def check_health(self) -> None:
         """Checks the health of optimized videos by comparing each original-optimized pair using SSIM."""
         sample = self._get_sample()
 
+        health_table = Table("Original", "Optimized", "%", "Health", box=box.ASCII, show_lines=True)
+        health_table.caption = f"Also logged at {DEBUG_LOG_FILE.absolute()}"
+
         with self.ProgressBar as progress:
             # Create "overall" progress bar for the entire directory
             overall_progress_id = progress.add_task(
-                f"Performing healthcheck for {self.directory.name}. Sample size: {len(sample) if not self.process_all else 'all'}",
+                f"Performing healthcheck for {self.directory.name}..",
                 total=len(sample),
             )
 
             for original_video, optimized_video in sample:
                 current_pair = f"'{original_video.name}' & '{optimized_video.name}'"
-                current_pair_progress_id = progress.add_task(f"Comparing {current_pair}..", total=None)
                 # Get ssim value between the two
                 logger.info(f"Starting SSIM comparison for {current_pair}.")
-
                 # Perform compairson
                 ssim = self._compare_videos_ssim(original_video, optimized_video)
-
-                # Log result
                 logger.info(f"{current_pair} = {ssim} SSIM")
 
-                # Update video progress bars
-                progress.update(current_pair_progress_id, total=1, completed=1)
-                progress.update(
-                    current_pair_progress_id,
-                    description=f"{current_pair} are [green]{self._grade_ssim(ssim).lower()}[/] [{round(ssim, 3) * 100}%]",
+                health_table.add_row(
+                    Text(original_video.name),
+                    Text(optimized_video.name),
+                    f"{round(ssim, 3) * 100}%",
+                    self._grade_ssim(ssim),
+                    style=self._grade_ssim_color(ssim),
                 )
-                # Advance overall progress bar
+
                 progress.update(overall_progress_id, advance=1)
 
             progress.update(
@@ -168,4 +143,40 @@ class HealthChecker:
                 description=f"[green]Finished[/] performing healthcheck for {self.directory}",
             )
 
-        self._all_done_message()
+        console.print(health_table)
+
+    @staticmethod
+    def _grade_ssim(score: float) -> str:
+        """Grades the SSIM score into descriptive text."""
+        if score == 1.0:
+            return "Identical"
+        elif score >= 0.99:
+            return "Excellent (visually identical)"
+        elif score >= 0.97:
+            return "Very Good (nearly indistinguishable)"
+        elif score >= 0.95:
+            return "Good (minor perceptual differences)"
+        elif score >= 0.90:
+            return "Fair (noticeable but acceptable loss)"
+        elif score >= 0.85:
+            return "Poor (visible degradation)"
+        elif score >= 0.70:
+            return "Bad (significant artifacts)"
+        elif score >= 0.50:
+            return "Very Bad (low fidelity)"
+        elif score >= 0.30:
+            return "Unusable (heavily degraded)"
+        elif score >= 0.10:
+            return "Broken (barely recognizable)"
+        else:
+            return "Garbage (not visually usable)"
+
+    @staticmethod
+    def _grade_ssim_color(score: float) -> str:
+        if score >= 0.97:
+            return "green"
+        elif score >= 0.95:
+            return "blue"
+        elif score >= 0.90:
+            return "yellow"
+        return "red"
