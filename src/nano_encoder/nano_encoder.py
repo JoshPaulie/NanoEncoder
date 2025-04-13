@@ -4,9 +4,9 @@ import traceback
 
 from .cli import create_parser
 from .console import console
-from .encode import handle_encode_command
 from .healthcheck import handle_health_command
 from .logger import logger
+from .optimize import handle_optimize_command
 from .purge import handle_purge_command
 
 
@@ -40,8 +40,8 @@ def main() -> None:
 
     try:
         match args.command:
-            case "encode":
-                handle_encode_command(args)
+            case "optimize":
+                handle_optimize_command(args)
             case "purge":
                 handle_purge_command(args)
             case "health":

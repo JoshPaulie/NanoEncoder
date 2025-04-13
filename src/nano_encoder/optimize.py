@@ -23,10 +23,10 @@ from .utils import (
     humanize_file_size,
     validate_directory,
 )
-from .video_encoder import VideoEncoder
+from .video_optimizer import VideoOptimizer
 
 
-def handle_encode_command(args) -> None:
+def handle_optimize_command(args) -> None:
     try:
         # User input validation
         validate_directory(args.directory)
@@ -86,12 +86,12 @@ class OptimizeDirectory:
         if not video_files:
             console.print("there's no original videos to optimize!")
             console.print("Another job well done!")
-            logger.info("Found no original videos to encode.")
+            logger.info("Found no original videos to optimize.")
             sys.exit()
 
         plural = "s" if len(video_files) != 1 else ""
         console.print(f"found [blue]{len(video_files)}[/] original video{plural}.")
-        logger.info(f"Found {len(video_files)} original video files in '{self.directory.name}'")
+        logger.info(f"Found {len(video_files)} original video files in '{self.directory.name}'.")
         return sorted(video_files)
 
     def _all_done_message(self) -> None:
@@ -124,9 +124,9 @@ class OptimizeDirectory:
                 current_video_progress_id = progress.add_task(f"Optimizing [yellow]{video.name}", total=None)
 
                 try:
-                    encoder = VideoEncoder(video, self.crf)
-                    encoder.encode()
-                    self.total_disk_space_change += encoder.disk_space_change
+                    optimizer = VideoOptimizer(video, self.crf)
+                    optimizer.optimize()
+                    self.total_disk_space_change += optimizer.disk_space_change
                 except (subprocess.CalledProcessError, FileNotFoundError) as e:
                     logger.error(f"Failed to process '{video}': {str(e)}")
 
