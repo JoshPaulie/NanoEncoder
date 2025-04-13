@@ -65,4 +65,8 @@ def create_parser() -> argparse.ArgumentParser:
         help="Check all video pairs rather than a sample",
     )
 
+    # Untag subcommand
+    untag_parser = subparsers.add_parser("untag", help="Remove '.optimized' from file names")
+    untag_parser.add_argument("directory", type=Path, help="Path to the target directory")
+
     return parser

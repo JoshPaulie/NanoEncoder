@@ -6,6 +6,7 @@ from .cli import create_parser
 from .commands.healthcheck import handle_health_command
 from .commands.optimize.optimize import handle_optimize_command
 from .commands.purge import handle_purge_command
+from .commands.untag import handle_untag_command
 from .console import console
 from .logger import logger
 
@@ -46,6 +47,8 @@ def main() -> None:
                 handle_purge_command(args)
             case "health":
                 handle_health_command(args)
+            case "untag":
+                handle_untag_command(args)
     except Exception as e:
         if args.dev:
             traceback.print_exc()

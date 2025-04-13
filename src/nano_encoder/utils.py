@@ -61,7 +61,15 @@ def has_optimized_version(file_path: Path) -> None | Path:
     return None
 
 
-def find_all_video_files(directory: Path, originals_only: bool = False) -> list[Path]:
+def find_all_video_files(
+    directory: Path,
+    originals_only: bool = False,
+    optimized_only: bool = False,
+) -> list[Path]:
+    if all([optimized_only, originals_only]):
+        # can't be both
+        raise Exception  # todo
+
     video_files: list[Path] = []
     for ext in VIDEO_FILE_EXTENSIONS:
         video_files.extend(directory.rglob(f"*.{ext}"))
@@ -69,7 +77,10 @@ def find_all_video_files(directory: Path, originals_only: bool = False) -> list[
     video_files = sorted(video_files)
 
     if originals_only:
-        video_files = [video for video in video_files if "optimized" not in video.name]
+        video_files = [video for video in video_files if ".optimized" not in video.name]
+
+    if optimized_only:
+        video_files = [video for video in video_files if ".optimized" in video.name]
 
     return video_files
 
