@@ -30,7 +30,7 @@ def handle_health_command(args) -> None:
 
 
 class HealthChecker:
-    """Handles health check operations to validate optimized videos against their sources."""
+    """Handles health check operations to validate optimized videos against their originals."""
 
     ProgressBar = Progress(
         SpinnerColumn(),
@@ -48,14 +48,14 @@ class HealthChecker:
 
     def _pair_videos(self) -> list[tuple[Path, Path]]:
         """
-        Create pairs of source and optimized videos.
-        Iterates over all source-only videos and finds their optimized counterparts.
+        Create pairs of original and optimized videos.
+        Iterates over all original-only videos and finds their optimized counterparts.
         """
         pairs: list[tuple[Path, Path]] = []
-        source_videos_files = find_all_video_files(self.directory, source_only=True)
-        for source_video in source_videos_files:
-            if optimized_video := has_optimized_version(source_video):
-                pairs.append((source_video, optimized_video))
+        original_files = find_all_video_files(self.directory, originals_only=True)
+        for original in original_files:
+            if optimized_video := has_optimized_version(original):
+                pairs.append((original, optimized_video))
         return pairs
 
     def _get_sample(self) -> list[tuple[Path, Path]]:
@@ -96,11 +96,11 @@ class HealthChecker:
         else:
             return "Garbage (not visually usable)"
 
-    def _compare_videos_ssim(self, source_file: Path, optimized_file: Path) -> float:
-        """Perform an SSIM comparison using ffmpeg between a source and optimized video."""
+    def _compare_videos_ssim(self, original_file: Path, optimized_file: Path) -> float:
+        """Perform an SSIM comparison using ffmpeg between a original and optimized video."""
         command = [
             "ffmpeg",
-            *["-i", str(source_file)],
+            *["-i", str(original_file)],
             *["-i", str(optimized_file)],
             *["-lavfi", "[0:v][1:v]ssim=stats_file=-"],
             *["-f", "null", "-"],
@@ -115,7 +115,7 @@ class HealthChecker:
                 check=True,
             )
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            logger.error(f"Failed to compare {source_file.name} & {optimized_file.name}: {str(e)}")
+            logger.error(f"Failed to compare {original_file.name} & {optimized_file.name}: {str(e)}")
             raise
 
         with open(DEBUG_LOG_FILE, "a") as log_file:
@@ -132,7 +132,7 @@ class HealthChecker:
         console.print(DEBUG_LOG_FILE.absolute())
 
     def check_health(self) -> None:
-        """Checks the health of optimized videos by comparing each source-optimized pair using SSIM."""
+        """Checks the health of optimized videos by comparing each original-optimized pair using SSIM."""
         sample = self._get_sample()
 
         with self.ProgressBar as progress:
@@ -142,14 +142,14 @@ class HealthChecker:
                 total=len(sample),
             )
 
-            for source_video, optimized_video in sample:
-                current_pair = f"'{source_video.name}' & '{optimized_video.name}'"
+            for original_video, optimized_video in sample:
+                current_pair = f"'{original_video.name}' & '{optimized_video.name}'"
                 current_pair_progress_id = progress.add_task(f"Comparing {current_pair}..", total=None)
                 # Get ssim value between the two
                 logger.info(f"Starting SSIM comparison for {current_pair}.")
 
                 # Perform compairson
-                ssim = self._compare_videos_ssim(source_video, optimized_video)
+                ssim = self._compare_videos_ssim(original_video, optimized_video)
 
                 # Log result
                 logger.info(f"{current_pair} = {ssim} SSIM")

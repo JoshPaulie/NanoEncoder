@@ -43,7 +43,7 @@ nen -h
 ```
 
 ## Usage
-The CLI has 2 commands: `encode` and `purge`. Each take a directory to transact against.
+The CLI has 2 commands: `optimize` and `purge`. Each take a directory to transact against.
 
 > [!important]
 > When optimizing a series, it's recommended you copy a few episodes to their own folder and experiment with the `--crf` flag.
@@ -51,20 +51,20 @@ The CLI has 2 commands: `encode` and `purge`. Each take a directory to transact 
 > Once you're sure you have a setting you like, you can confidently process the whole thing (assuming they're all of the same quality, like if you downloaded a series from the internet)
 
 ```bash
-nen encode '/media/series/The Office (US)' # Recursively find all videos and begin re-encoding
-nen purge '/media/series/The Office (US)'  # Recursively remove original (source) files
+nen optimize '/media/series/The Office (US)' # Recursively find all videos and begin re-encoding
+nen purge '/media/series/The Office (US)'  # Recursively remove original files
 
-nen encode --crf 28 '/media/series/Berserk (1997)' # Encode at specified CRF (Default is 23)
+nen optimize --crf 28 '/media/series/Berserk (1997)' # Re-encode at specified CRF (Default is 23)
 ```
 
-### Encode subcommand
-`encode` is used to re-encode entire directories. Files are found recursively, meaning all video files (regardless if they're nested in other directories) are found and processed.
+### Optimize subcommand
+`optimize` is used to re-encode entire directories into HEVC. Files are found recursively, meaning all video files (regardless if they're nested in other directories) are found and processed.
 
 - While encoding, the files will have **.optimizing** inserted before the file extention.
 - After encoding, the files will have **.optimized** inserted before the file extention.
 
 ### Purge subcommand
-`purge` is used to delete any original source files which have a corresponding optimized file. Meant to be ran against a directory after using `encode`.
+`purge` is used to delete any original files which have a corresponding optimized file. Meant to be ran against a directory after using `optimize`.
 
 ## Features
 - **Greatly reduce file sizes** for videos by re-encoding with h.265/HEVC (even videos already with this encoding will still see a reduction in size)
@@ -76,11 +76,11 @@ nen encode --crf 28 '/media/series/Berserk (1997)' # Encode at specified CRF (De
 
 ### Safety Measures
 - No silent deletions: `purge` requires explicit user confirmation
-- Crash detection: Handles partially encoded files
+- Crash detection: Handles partially optimized files
 - Comprehensive logging: All operations are recorded in `~/NanoEncoder.log`, and FFmpeg logs  arerecorded in `~/NanoEncoder_ffmpeg.log`
 
 ## Quality of optimized videos
-Video quality will remain perceptively the same, unless it's an outrageously highly detailed source file. You may see a decrease in quality, the higher the definition. Movies and shows at 1080p are best suited for NanoEncoder.
+Video quality will remain perceptively the same, unless it's an outrageously highly detailed video. You may see a decrease in quality, the higher the definition. Movies and shows at 1080p are best suited for NanoEncoder.
 
 - Live action shows and movies may have minor loss in quality.
 - Anime content seem to lose no noticeable loss in quality, and are the ideal usecase.
@@ -131,4 +131,4 @@ ffmpeg -i input.mp4 -c:v libx265 -crf 23 -preset fast -threads 0 -c:a copy -c:s 
 
 [^1]: By literally not touching them at all and copying them as-is. 😎
 [^2]: Well, near where it left off. It will delete the partially-encoded file (denoted by .optimizing still being in the name), and re-encode the original.
-[^3]: Use `NanoEncoder.py encode -h` for more details
+[^3]: Use `NanoEncoder.py optimize -h` for more details

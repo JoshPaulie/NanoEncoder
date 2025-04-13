@@ -6,7 +6,7 @@ from .logger import DEBUG_LOG_FILE, logger
 from .utils import humanize_duration, humanize_file_size
 
 
-class VideoEncoder:
+class VideoOptimizer:
     """Handles video encoding operations using ffmpeg."""
 
     def __init__(self, video_file: Path, crf: int) -> None:
@@ -14,7 +14,7 @@ class VideoEncoder:
         self.input_file = video_file
         self.crf = crf
 
-        # The resulting "encoded" or "output" file. Starts with ".optimizing" label
+        # The resulting "optimized" file. Starts with ".optimizing" label
         self.output_file = self._create_optimizing_output_path()
 
         # Remove unfinished field if present
@@ -35,7 +35,7 @@ class VideoEncoder:
         """Create output path with 'optimizing' status marker."""
         return self.input_file.with_name(f"{self.input_file.stem}.optimizing{self.input_file.suffix}")
 
-    def encode(self) -> None:
+    def optimize(self) -> None:
         """Perform video encoding and post-processing."""
         self._run_ffmpeg()
         self._validate_output()
@@ -69,10 +69,11 @@ class VideoEncoder:
     def _validate_output(self) -> None:
         """Validate encoding results and calculate savings."""
         if not self.output_file.exists():
-            raise FileNotFoundError("Encoded file not created")
+            logger.error("Optimized file not created.")
+            raise FileNotFoundError("Optimized file not created.")
 
-        self.encoded_size = self.output_file.stat().st_size
-        self.disk_space_change = self.original_size - self.encoded_size
+        self.post_optimization_size = self.output_file.stat().st_size
+        self.disk_space_change = self.original_size - self.post_optimization_size
 
     def _rename_final_output(self) -> None:
         """Finalize file name by changing .optimizing.ext → .optimized.ext"""
@@ -87,7 +88,7 @@ class VideoEncoder:
         report = [
             f"Finished encoding '{self.input_file.name}'.",
             f"Duration: {humanize_duration(self.encoding_duration)} ({speed_factor:.2f}x).",
-            f"Size: {humanize_file_size(self.original_size)} → {humanize_file_size(self.encoded_size)}.",
+            f"Size: {humanize_file_size(self.original_size)} → {humanize_file_size(self.post_optimization_size)}.",
             f"Disk space: {humanize_file_size(abs(self.disk_space_change))} "
             f"({'saved' if self.disk_space_change > 0 else 'increased'}).",
         ]

@@ -28,10 +28,10 @@ def create_parser() -> argparse.ArgumentParser:
     # Subparser
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # Encode subcommand
-    encode_parser = subparsers.add_parser("encode", help="Encode video files")
-    encode_parser.add_argument("directory", type=Path, help="Path to the target directory")
-    encode_parser.add_argument(
+    # Optimize subcommand
+    optimize_parser = subparsers.add_parser("optimize", help="Optimize (re-encode) video files")
+    optimize_parser.add_argument("directory", type=Path, help="Path to the target directory")
+    optimize_parser.add_argument(
         "--crf",
         type=int,
         default=23,
@@ -51,7 +51,7 @@ def create_parser() -> argparse.ArgumentParser:
     health_check_parser.add_argument(
         "directory",
         type=Path,
-        help="Check a small sample of source and optimized files, comparing similarity",
+        help="Check a small sample of original and optimized files, comparing similarity",
     )
     health_check_parser.add_argument(
         "--sample-ratio",

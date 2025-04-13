@@ -25,18 +25,18 @@ class PurgeDirectory:
     def __init__(self, directory: Path) -> None:
         self.directory = directory
 
-    def _find_originals_to_purge(self) -> list[Path]:
+    def _find_original_files_to_purge(self) -> list[Path]:
         """Scan directory for candidate original video files to purge."""
         console.print("Looking for original files with optimized files..")
         candidates = []
         for ext in VIDEO_FILE_EXTENSIONS:
             candidates.extend(self.directory.rglob(f"*.{ext}"))
 
-        originals = []
+        original_files = []
         for file in track(candidates, "Finding pairs..", transient=True):
             if "optimized" not in file.name and has_optimized_version(file):
-                originals.append(file)
-        return originals
+                original_files.append(file)
+        return original_files
 
     def _has_unfinished_video(self) -> Path | None:
         """Check if there's any unfinished video in the directory."""
@@ -46,10 +46,10 @@ class PurgeDirectory:
                 return video
         return None
 
-    def _confirm_deletion(self, originals: list[Path]) -> bool:
+    def _confirm_deletion(self, original_files: list[Path]) -> bool:
         """Confirm deletion by listing originals and prompting user."""
-        console.print(f"Found {len(originals)} originals with optimized versions:")
-        for orig in originals:
+        console.print(f"Found {len(original_files)} originals with optimized versions:")
+        for orig in original_files:
             console.print(f" - {orig.name} → {orig.with_name(f'{orig.stem}.optimized{orig.suffix}').name}")
         print()
 
@@ -70,10 +70,10 @@ class PurgeDirectory:
                 )
             )
             logger.error(f"Unfinished video: {unfinished_video.absolute()}")
-            console.print(f"\n[green]Suggested fix[/]:\nnen encode {self.directory.absolute()}")
+            console.print(f"\n[green]Suggested fix[/]:\nnen optimize {self.directory.absolute()}")
             return
 
-        originals = self._find_originals_to_purge()
+        originals = self._find_original_files_to_purge()
 
         if not originals:
             no_originals_message = f"No originals with optimized versions found in '{self.directory.name}'"

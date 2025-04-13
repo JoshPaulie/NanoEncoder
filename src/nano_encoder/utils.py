@@ -53,7 +53,7 @@ def validate_directory(path: Path) -> None:
 
 def has_optimized_version(file_path: Path) -> None | Path:
     """
-    Check if source video has accompanying optimized video, and return it if so
+    Check if original video has accompanying optimized video, and return it if so
     """
     optimized_path = file_path.with_stem(f"{file_path.stem}.optimized")
     if optimized_path.exists():
@@ -61,21 +61,21 @@ def has_optimized_version(file_path: Path) -> None | Path:
     return None
 
 
-def find_all_video_files(directory: Path, source_only: bool = False) -> list[Path]:
+def find_all_video_files(directory: Path, originals_only: bool = False) -> list[Path]:
     video_files: list[Path] = []
     for ext in VIDEO_FILE_EXTENSIONS:
         video_files.extend(directory.rglob(f"*.{ext}"))
 
     video_files = sorted(video_files)
 
-    if source_only:
+    if originals_only:
         video_files = [video for video in video_files if "optimized" not in video.name]
 
     return video_files
 
 
 def directory_fully_processed(directory: Path):
-    video_files = find_all_video_files(directory, source_only=True)
+    video_files = find_all_video_files(directory, originals_only=True)
     for video in video_files:
         if not has_optimized_version(video):
             return False
