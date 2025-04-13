@@ -114,6 +114,19 @@ The following command is what is ran against all found video files (though, the 
 ffmpeg -i input.mp4 -c:v libx265 -crf 23 -preset fast -threads 0 -c:a copy -c:s copy -loglevel error output.mp4
 ```
 
+## Contributing
+1. File an issue (optional)
+2. Clone repo
+3. Make venv `uv venv`
+4. Install editable locally `uv pip install -e .`
+5. Make branch 
+6. PR
+
+### Requirements
+- [uv](https://github.com/astral-sh/uv) 
+- [ruff](https://github.com/astral-sh/ruff)
+  - 110 line length
+
 ---
 
 [^1]: By literally not touching them at all and copying them as-is. 😎
