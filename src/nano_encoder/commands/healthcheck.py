@@ -12,9 +12,9 @@ from rich.progress import (
     TimeElapsedColumn,
 )
 
-from .console import console
-from .logger import DEBUG_LOG_FILE, logger
-from .utils import find_all_video_files, has_optimized_version, validate_directory
+from ..console import console
+from ..logger import DEBUG_LOG_FILE, logger
+from ..utils import find_all_video_files, has_optimized_version, validate_directory
 
 
 def handle_health_command(args) -> None:

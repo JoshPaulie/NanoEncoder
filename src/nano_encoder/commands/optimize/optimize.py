@@ -12,9 +12,9 @@ from rich.progress import (
     TimeElapsedColumn,
 )
 
-from .console import console
-from .logger import logger
-from .utils import (
+from ...console import console
+from ...logger import logger
+from ...utils import (
     CRF_MAX,
     CRF_MIN,
     VIDEO_FILE_EXTENSIONS,

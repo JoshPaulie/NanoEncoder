@@ -3,11 +3,11 @@ import sys
 import traceback
 
 from .cli import create_parser
+from .commands.healthcheck import handle_health_command
+from .commands.optimize.optimize import handle_optimize_command
+from .commands.purge import handle_purge_command
 from .console import console
-from .healthcheck import handle_health_command
 from .logger import logger
-from .optimize import handle_optimize_command
-from .purge import handle_purge_command
 
 
 def welcome_message() -> None:

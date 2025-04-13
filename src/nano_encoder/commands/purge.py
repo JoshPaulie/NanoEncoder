@@ -2,9 +2,9 @@ from pathlib import Path
 
 from rich.progress import track
 
-from .console import console
-from .logger import logger
-from .utils import VIDEO_FILE_EXTENSIONS, find_all_video_files, has_optimized_version
+from ..console import console
+from ..logger import logger
+from ..utils import VIDEO_FILE_EXTENSIONS, find_all_video_files, has_optimized_version
 
 
 def handle_purge_command(args) -> None:

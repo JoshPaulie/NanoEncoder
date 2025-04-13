@@ -2,8 +2,8 @@ import subprocess
 import time
 from pathlib import Path
 
-from .logger import DEBUG_LOG_FILE, logger
-from .utils import humanize_duration, humanize_file_size
+from ...logger import DEBUG_LOG_FILE, logger
+from ...utils import humanize_duration, humanize_file_size
 
 
 class VideoOptimizer:
