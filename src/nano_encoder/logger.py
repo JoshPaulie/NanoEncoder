@@ -27,10 +27,13 @@ class NanoEncoderLogger(logging.Logger):
         super().critical(self._stringify(msg), *args, **kwargs)
 
 
+# Configure logging
 logging.setLoggerClass(NanoEncoderLogger)
 logger: NanoEncoderLogger = logging.getLogger("NanoEncoder")  # type: ignore
 logger.setLevel(logging.INFO)
-file_handler = logging.FileHandler(NANO_ENCODER_LOG_FILE)
+
+# File handler
+file_handler = logging.FileHandler(NANO_ENCODER_LOG_FILE, encoding="utf-8")
 formatter = logging.Formatter("%(asctime)s - %(levelname)-8s - %(message)s")
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
