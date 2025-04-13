@@ -116,12 +116,12 @@ class OptimizeDirectory:
         with self.ProgressBar as progress:
             # Create "overall" progress bar for the entire directory
             overall_progress_id = progress.add_task(
-                f"Optimizing {self.directory.name}", total=len(video_files)
+                f"Optimizing '{self.directory.name}' directory..", total=len(video_files)
             )
 
             for video in video_files:
                 # Add new progress bar for each video
-                current_video_progress_id = progress.add_task(f"Optimizing [yellow]{video.name}", total=None)
+                current_video_progress_id = progress.add_task(f"[yellow]{video.name}", total=None)
 
                 try:
                     optimizer = VideoOptimizer(video, self.crf)
@@ -132,12 +132,12 @@ class OptimizeDirectory:
 
                 # Update video progress bars
                 progress.update(current_video_progress_id, total=1, completed=1)
-                progress.update(current_video_progress_id, description=f"Finished [green]{video.name}")
+                progress.update(current_video_progress_id, description=f"[green]{video.name}")
                 # Advance overall progress bar
                 progress.update(overall_progress_id, advance=1)
 
             # Update overall progress
-            progress.update(overall_progress_id, description=f"Finished [green]{self.directory.name}")
+            progress.update(overall_progress_id, description=f"[green]{self.directory.name}")
 
         # Elapsed time from optimizing directory
         self.processing_duration = time.perf_counter() - start_time
