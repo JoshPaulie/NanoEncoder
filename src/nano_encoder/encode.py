@@ -92,7 +92,7 @@ class OptimizeDirectory:
         plural = "s" if len(video_files) != 1 else ""
         console.print(f"found [blue]{len(video_files)}[/] original video{plural}.")
         logger.info(f"Found {len(video_files)} original video files in '{self.directory.name}'")
-        return video_files
+        return sorted(video_files)
 
     def _all_done_message(self) -> None:
         # User output

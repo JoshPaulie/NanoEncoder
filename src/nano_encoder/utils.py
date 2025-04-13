@@ -66,6 +66,8 @@ def find_all_video_files(directory: Path, source_only: bool = False) -> list[Pat
     for ext in VIDEO_FILE_EXTENSIONS:
         video_files.extend(directory.rglob(f"*.{ext}"))
 
+    video_files = sorted(video_files)
+
     if source_only:
         video_files = [video for video in video_files if "optimized" not in video.name]
 
