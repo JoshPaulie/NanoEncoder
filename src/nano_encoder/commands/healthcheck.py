@@ -18,7 +18,7 @@ from rich.text import Text
 
 from ..console import console
 from ..logger import DEBUG_LOG_FILE, logger
-from ..utils import find_all_video_files, has_optimized_version, validate_directory
+from ..utils import find_all_video_files, has_optimized_version, humanize_file_size, validate_directory
 
 
 def handle_health_command(args) -> None:
@@ -40,10 +40,20 @@ class HealthChecker:
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
         BarColumn(),
-        TaskProgressColumn(highlighter=None),
+        TextColumn("{task.completed}/{task.total}"),
+        TaskProgressColumn(),
         TimeElapsedColumn(),
         expand=True,
+        console=console,
     )
+
+    health_table = Table(box=box.ASCII, show_lines=True)
+    health_table.add_column("Original")
+    health_table.add_column("Optimized")
+    health_table.add_column("SSIM")
+    health_table.add_column("Grade")
+    health_table.add_column("Size diff")  # + / -
+    health_table.caption = f"Also logged at {DEBUG_LOG_FILE.absolute()}"
 
     def __init__(self, directory: Path, sample_ratio: float, process_all: bool = False) -> None:
         validate_directory(directory)
@@ -61,6 +71,8 @@ class HealthChecker:
         for original in original_files:
             if optimized_video := has_optimized_version(original):
                 pairs.append((original, optimized_video))
+        if not pairs:
+            raise FileNotFoundError(f"'{self.directory}' directory doesn't have any pairs to compare.")
         return pairs
 
     def _get_sample(self) -> list[tuple[Path, Path]]:
@@ -110,30 +122,34 @@ class HealthChecker:
         """Checks the health of optimized videos by comparing each original-optimized pair using SSIM."""
         sample = self._get_sample()
 
-        health_table = Table("Original", "Optimized", "%", "Health", box=box.ASCII, show_lines=True)
-        health_table.caption = f"Also logged at {DEBUG_LOG_FILE.absolute()}"
-
         with self.ProgressBar as progress:
             # Create "overall" progress bar for the entire directory
             overall_progress_id = progress.add_task(
-                f"Performing healthcheck for {self.directory.name}..",
+                f"Performing healthcheck for [blue]{self.directory.name}[/]..",
                 total=len(sample),
             )
 
             for original_video, optimized_video in sample:
+                # String name for pair
                 current_pair = f"'{original_video.name}' & '{optimized_video.name}'"
-                # Get ssim value between the two
-                logger.info(f"Starting SSIM comparison for {current_pair}.")
+
                 # Perform compairson
+                logger.info(f"Starting SSIM comparison for {current_pair}.")
                 ssim = self._compare_videos_ssim(original_video, optimized_video)
                 logger.info(f"{current_pair} = {ssim} SSIM")
 
-                health_table.add_row(
+                # Size column
+                size_diff = optimized_video.stat().st_size - original_video.stat().st_size
+                diff_sign = "+" if size_diff >= 0 else "-"
+                ssim_grade, healthcolor = self._grade_ssim(ssim)
+
+                self.health_table.add_row(
                     Text(original_video.name),
                     Text(optimized_video.name),
-                    f"{round(ssim, 3) * 100}%",
-                    self._grade_ssim(ssim),
-                    style=self._grade_ssim_color(ssim),
+                    Text(str(round(ssim, 3))),
+                    Text(ssim_grade),
+                    Text(diff_sign + humanize_file_size(abs(size_diff))),
+                    style="red" if size_diff >= 0 else healthcolor,
                 )
 
                 progress.update(overall_progress_id, advance=1)
@@ -143,40 +159,22 @@ class HealthChecker:
                 description=f"[green]Finished[/] performing healthcheck for {self.directory}",
             )
 
-        console.print(health_table)
+        console.print(self.health_table)
 
     @staticmethod
-    def _grade_ssim(score: float) -> str:
+    def _grade_ssim(score: float) -> tuple[str, str]:
         """Grades the SSIM score into descriptive text."""
         if score == 1.0:
-            return "Identical"
-        elif score >= 0.99:
-            return "Excellent (visually identical)"
-        elif score >= 0.97:
-            return "Very Good (nearly indistinguishable)"
-        elif score >= 0.95:
-            return "Good (minor perceptual differences)"
-        elif score >= 0.90:
-            return "Fair (noticeable but acceptable loss)"
-        elif score >= 0.85:
-            return "Poor (visible degradation)"
-        elif score >= 0.70:
-            return "Bad (significant artifacts)"
-        elif score >= 0.50:
-            return "Very Bad (low fidelity)"
-        elif score >= 0.30:
-            return "Unusable (heavily degraded)"
-        elif score >= 0.10:
-            return "Broken (barely recognizable)"
+            return "Identical", "green"
+        elif score >= 0.998:
+            return "Excellent (visually identical)", "green"
+        elif score >= 0.996:
+            return "Good (nearly indistinguishable)", "green"
+        elif score >= 0.994:
+            return "OK (subtle artifacts)", "yellow"
+        elif score >= 0.992:
+            return "Fair (minor artifacts)", "yellow"
+        elif score >= 0.990:
+            return "Poor (noticeable artifacts)", "red"
         else:
-            return "Garbage (not visually usable)"
-
-    @staticmethod
-    def _grade_ssim_color(score: float) -> str:
-        if score >= 0.97:
-            return "green"
-        elif score >= 0.95:
-            return "blue"
-        elif score >= 0.90:
-            return "yellow"
-        return "red"
+            return "Garbage (not visually usable)", "red"
