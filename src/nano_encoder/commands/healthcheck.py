@@ -18,7 +18,13 @@ from rich.text import Text
 
 from ..console import console
 from ..logger import DEBUG_LOG_FILE, logger
-from ..utils import find_all_video_files, has_optimized_version, humanize_file_size, validate_directory
+from ..utils import (
+    find_all_video_files,
+    get_video_resolution,
+    has_optimized_version,
+    humanize_file_size,
+    validate_directory,
+)
 
 
 def handle_health_command(args) -> None:
@@ -60,6 +66,10 @@ class HealthChecker:
         self.directory = directory
         self.sample_ratio = sample_ratio
         self.process_all = process_all
+
+    @staticmethod
+    def _is_same_resolution(video1: Path, video2: Path):
+        return get_video_resolution(video1) == get_video_resolution(video2)
 
     def _pair_videos(self) -> list[tuple[Path, Path]]:
         """
@@ -133,14 +143,27 @@ class HealthChecker:
                 # String name for pair
                 current_pair = f"'{original_video.name}' & '{optimized_video.name}'"
 
+                # Compare sizes
+                size_diff = optimized_video.stat().st_size - original_video.stat().st_size
+                diff_sign = "+" if size_diff >= 0 else "-"
+
+                # Skip iteration if videos are different resolutions
+                if not self._is_same_resolution(original_video, optimized_video):
+                    self.health_table.add_row(
+                        Text(original_video.name),
+                        Text(optimized_video.name),
+                        Text("0"),
+                        Text("Varying resolutions, unable to compare."),
+                        Text(diff_sign + humanize_file_size(abs(size_diff))),
+                        style="red",
+                    )
+                    progress.update(overall_progress_id, advance=1)
+                    continue
+
                 # Perform compairson
                 logger.info(f"Starting SSIM comparison for {current_pair}.")
                 ssim = self._compare_videos_ssim(original_video, optimized_video)
                 logger.info(f"{current_pair} = {ssim} SSIM")
-
-                # Size column
-                size_diff = optimized_video.stat().st_size - original_video.stat().st_size
-                diff_sign = "+" if size_diff >= 0 else "-"
                 ssim_grade, healthcolor = self._grade_ssim(ssim)
 
                 self.health_table.add_row(
