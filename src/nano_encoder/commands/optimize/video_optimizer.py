@@ -3,7 +3,7 @@ import time
 from pathlib import Path
 
 from ...logger import DEBUG_LOG_FILE, logger
-from ...utils import humanize_duration, humanize_file_size
+from ...utils import get_video_duration, humanize_duration, humanize_file_size
 
 
 class VideoOptimizer:
@@ -83,30 +83,14 @@ class VideoOptimizer:
 
     def _log_report(self) -> None:
         """Generate encoding results report."""
-        speed_factor = self._get_video_duration() / self.encoding_duration
+        self.speed_factor = get_video_duration(self.input_file) / self.encoding_duration
 
         report = [
             f"Finished encoding '{self.input_file.name}'.",
-            f"Duration: {humanize_duration(self.encoding_duration)} ({speed_factor:.2f}x).",
+            f"Duration: {humanize_duration(self.encoding_duration)} ({self.speed_factor:.2f}x).",
             f"Size: {humanize_file_size(self.original_size)} → {humanize_file_size(self.post_optimization_size)}.",
             f"Disk space: {humanize_file_size(abs(self.disk_space_change))} "
             f"({'saved' if self.disk_space_change > 0 else 'increased'}).",
         ]
 
         logger.info(report)
-
-    def _get_video_duration(self) -> float:
-        """Get video duration using ffprobe."""
-        result = subprocess.run(
-            [
-                "ffprobe",
-                *["-i", str(self.input_file)],
-                *["-show_entries", "format=duration"],
-                *["-v", "quiet"],
-                *["-of", "csv=p=0"],
-            ],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        return float(result.stdout.strip())

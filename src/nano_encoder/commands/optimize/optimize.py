@@ -18,9 +18,11 @@ from ...utils import (
     CRF_MAX,
     CRF_MIN,
     VIDEO_FILE_EXTENSIONS,
+    get_video_duration,
     has_optimized_version,
     humanize_duration,
     humanize_file_size,
+    shorten_path,
     validate_directory,
 )
 from .video_optimizer import VideoOptimizer
@@ -48,11 +50,12 @@ class OptimizeDirectory:
 
     ProgressBar = Progress(
         SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
+        TextColumn("[progress.description]{task.description} {task.fields[eta]}"),
         BarColumn(),
         TaskProgressColumn(),
         TimeElapsedColumn(),
         expand=True,
+        console=console,
     )
 
     def __init__(self, directory: Path, crf: int) -> None:
@@ -60,6 +63,7 @@ class OptimizeDirectory:
         self.crf = crf
         self.total_disk_space_change = 0
         self.processing_duration = 0
+        self.video_files = self._find_video_files()
 
     def _video_already_optimized(self, file_path: Path) -> bool:
         """Check if the file already has an optimized version."""
@@ -110,18 +114,19 @@ class OptimizeDirectory:
         """Process each video file in the directory."""
         logger.info(f"Starting processing for '{self.directory}'..")
         start_time = time.perf_counter()
-        video_files = self._find_video_files()
         console.print()
 
         with self.ProgressBar as progress:
             # Create "overall" progress bar for the entire directory
             overall_progress_id = progress.add_task(
-                f"Optimizing '{self.directory.name}' directory..", total=len(video_files)
+                f"Optimizing '{shorten_path(self.directory, 3)}'",
+                total=len(self.video_files),
+                eta="",
             )
 
-            for video in video_files:
+            for indx, video in enumerate(self.video_files):
                 # Add new progress bar for each video
-                current_video_progress_id = progress.add_task(f"[yellow]{video.name}", total=None)
+                current_video_progress_id = progress.add_task(f"[yellow]{video.name}", total=None, eta="")
 
                 try:
                     optimizer = VideoOptimizer(video, self.crf)
@@ -133,11 +138,17 @@ class OptimizeDirectory:
                 # Update video progress bars
                 progress.update(current_video_progress_id, total=1, completed=1)
                 progress.update(current_video_progress_id, description=f"[green]{video.name}")
-                # Advance overall progress bar
-                progress.update(overall_progress_id, advance=1)
+
+                # Advance overall progress bar, update ETA
+                videos_remaining = len(self.video_files) - (indx + 1)
+                progress.update(
+                    overall_progress_id,
+                    advance=1,
+                    eta=f"Eta: {self._get_eta(videos_remaining, self._average_video_length(), optimizer.speed_factor)}",
+                )
 
             # Update overall progress
-            progress.update(overall_progress_id, description=f"[green]{self.directory.name}")
+            progress.update(overall_progress_id, description=f"[green]{self.directory.name}", eta="")
 
         # Elapsed time from optimizing directory
         self.processing_duration = time.perf_counter() - start_time
@@ -153,3 +164,14 @@ class OptimizeDirectory:
         )
 
         self._all_done_message()
+
+    def _average_video_length(self):
+        total_video_length = sum([get_video_duration(video) for video in self.video_files])
+        video_count = len(self.video_files)
+        return round(total_video_length / video_count)
+
+    @staticmethod
+    def _get_eta(videos_remaining: int, average_video_length: int, speed: float):
+        time_left = videos_remaining * average_video_length
+        time_remaining = time_left / speed
+        return humanize_duration(time_remaining)

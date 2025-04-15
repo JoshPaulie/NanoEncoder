@@ -1,4 +1,5 @@
 import math
+import subprocess
 from pathlib import Path
 
 from .exceptions import EmptyDirectory
@@ -91,3 +92,24 @@ def directory_fully_processed(directory: Path):
         if not has_optimized_version(video):
             return False
     return True
+
+
+def get_video_duration(video: Path) -> float:
+    """Get video duration (in seconds) using ffprobe."""
+    result = subprocess.run(
+        [
+            "ffprobe",
+            *["-i", str(video)],
+            *["-show_entries", "format=duration"],
+            *["-v", "quiet"],
+            *["-of", "csv=p=0"],
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return float(result.stdout.strip())
+
+
+def shorten_path(file_path: Path, length: int):
+    return Path(*Path(file_path).parts[-length:])
