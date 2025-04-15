@@ -164,6 +164,7 @@ class HealthChecker:
     @staticmethod
     def _grade_ssim(score: float) -> tuple[str, str]:
         """Grades the SSIM score into descriptive text."""
+        score = round(score, 3)
         if score == 1.0:
             return "Identical", "green"
         elif score >= 0.998:
