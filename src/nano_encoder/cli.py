@@ -37,6 +37,11 @@ def create_parser() -> argparse.ArgumentParser:
         default=23,
         help=f"Constant rate factor ({CRF_MIN}-{CRF_MAX}, default: %(default)s)",
     )
+    optimize_parser.add_argument(
+        "--downscale",
+        type=int,
+        help="Downscale video resolution to a specified height (e.g., 1080 or 720). Maintains aspect ratio.",
+    )
 
     # Purge subcommand
     purge_parser = subparsers.add_parser(

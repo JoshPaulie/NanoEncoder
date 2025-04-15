@@ -35,7 +35,12 @@ def handle_optimize_command(args) -> None:
         if not CRF_MIN <= args.crf <= CRF_MAX:
             raise ValueError(f"CRF must be between {CRF_MIN} and {CRF_MAX}")
 
-        OptimizeDirectory(args.directory, args.crf).optimize()
+        if args.downscale:
+            downscale = args.downscale
+        else:
+            downscale = None
+
+        OptimizeDirectory(args.directory, args.crf, downscale).optimize()
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
         logger.error(str(e))
         raise
@@ -58,9 +63,10 @@ class OptimizeDirectory:
         console=console,
     )
 
-    def __init__(self, directory: Path, crf: int) -> None:
+    def __init__(self, directory: Path, crf: int, downscale: int | None = None) -> None:
         self.directory = directory.resolve()
         self.crf = crf
+        self.downscale = downscale
         self.total_disk_space_change = 0
         self.processing_duration = 0
         self.video_files = self._find_video_files()
@@ -129,7 +135,7 @@ class OptimizeDirectory:
                 current_video_progress_id = progress.add_task(f"[yellow]{video.name}", total=None, eta="")
 
                 try:
-                    optimizer = VideoOptimizer(video, self.crf)
+                    optimizer = VideoOptimizer(video, self.crf, self.downscale)
                     optimizer.optimize()
                     self.total_disk_space_change += optimizer.disk_space_change
                 except (subprocess.CalledProcessError, FileNotFoundError) as e:

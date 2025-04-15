@@ -9,10 +9,11 @@ from ...utils import get_video_duration, humanize_duration, humanize_file_size
 class VideoOptimizer:
     """Handles video encoding operations using ffmpeg."""
 
-    def __init__(self, video_file: Path, crf: int) -> None:
+    def __init__(self, video_file: Path, crf: int, downscale: int | None = None) -> None:
         # User args
         self.input_file = video_file
         self.crf = crf
+        self.downscale = downscale
 
         # The resulting "optimized" file. Starts with ".optimizing" label
         self.output_file = self._create_optimizing_output_path()
@@ -53,6 +54,7 @@ class VideoOptimizer:
             *["-threads", "0"],
             *["-c:a", "copy"],
             *["-c:s", "copy"],
+            *(["-vf", f"scale=-2:{self.downscale}"] if self.downscale else []),
             *["-loglevel", "error"],
             str(self.output_file),
         ]
