@@ -112,6 +112,7 @@ def get_video_duration(video: Path) -> float:
 
 
 def get_video_resolution(video: Path) -> str:
+    """Get video resolution, returned in '1920x1080' format using ffprobe."""
     result = subprocess.run(
         [
             "ffprobe",
