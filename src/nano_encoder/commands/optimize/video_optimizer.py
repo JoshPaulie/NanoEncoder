@@ -46,16 +46,16 @@ class VideoOptimizer:
     def _run_ffmpeg(self) -> None:
         """Execute ffmpeg command with configured parameters."""
         command = [
-            "ffmpeg",
-            *["-i", str(self.input_file)],
-            *["-c:v", "libx265"],
-            *["-crf", str(self.crf)],
-            *["-preset", "fast"],
-            *["-threads", "0"],
-            *["-c:a", "copy"],
-            *["-c:s", "copy"],
-            *(["-vf", f"scale=-2:{self.downscale}"] if self.downscale else []),
-            *["-loglevel", "error"],
+            "ffmpeg",  # GOAT
+            *["-i", str(self.input_file)],  # Input file
+            *["-c:v", "libx265"],  # HEVC (aka) h.265
+            *["-crf", str(self.crf)],  # Constant refresh rate
+            *["-preset", "fast"],  # NanoEncoder default: fast
+            *["-threads", "0"],  # Use all available threads
+            *["-c:a", "copy"],  # Copy audio "as is"
+            *["-c:s", "copy"],  # Copy subtitles "as is"
+            *(["-vf", f"scale=-2:{self.downscale}"] if self.downscale else []),  # Downscale flag (or not)
+            *["-loglevel", "error"],  # Only log errors
             str(self.output_file),
         ]
 
