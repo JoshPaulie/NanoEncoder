@@ -35,8 +35,10 @@ def handle_optimize_command(args) -> None:
         if not CRF_MIN <= args.crf <= CRF_MAX:
             raise ValueError(f"CRF must be between {CRF_MIN} and {CRF_MAX}")
 
-        # Downscale flag
-        downscale = args.downscale if args.downscale else None
+        if args.downscale:
+            downscale = args.downscale
+        else:
+            downscale = None
 
         OptimizeDirectory(args.directory, args.crf, downscale).optimize()
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
