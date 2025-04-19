@@ -55,6 +55,7 @@ class VideoOptimizer:
             *["-c:a", "copy"],  # Copy audio "as is"
             *["-c:s", "copy"],  # Copy subtitles "as is"
             *(["-vf", f"scale=-2:{self.downscale}"] if self.downscale else []),  # Downscale flag (or not)
+            *["-tag:v", "hvc1"],  # Apple compatibility
             *["-loglevel", "error"],  # Only log errors
             str(self.output_file),
         ]
