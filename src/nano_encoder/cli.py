@@ -1,7 +1,7 @@
 import argparse
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, is_dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Type, TypeVar
 
 from nano_encoder import __version__
 
@@ -46,9 +46,28 @@ class UntagArgs:
     directory: Path
 
 
-def dataclass_from_namespace(cls, args: argparse.Namespace):
-    raw = vars(args).copy()
-    return cls(**{f.name: raw[f.name] for f in fields(cls) if f.name in raw})
+ArgsDataclassType = TypeVar("ArgsDataclassType")
+
+
+def dataclass_from_namespace(
+    cls: Type[ArgsDataclassType], namespace: argparse.Namespace
+) -> ArgsDataclassType:
+    """
+    Takes a namespace from argparse and maps it to its respective dataclass
+
+    Mostly experimenting with modern Python and getting auto-complete out of the namespaces (which
+    is pretty simple with no subparsers)
+    """
+    namespace_dict = vars(namespace)
+    if not is_dataclass(cls):
+        raise TypeError(f"{cls} must be a dataclass type.")
+    return cls(
+        **{
+            field.name: namespace_dict.get(field.name)
+            for field in fields(cls)
+            if field.name in namespace_dict
+        }
+    )
 
 
 # --- Input validators ---
