@@ -42,6 +42,23 @@ def create_parser() -> argparse.ArgumentParser:
         type=int,
         help="Downscale video resolution to a specified height (e.g., 1080 or 720). Maintains aspect ratio.",
     )
+    optimize_parser.add_argument(
+        "--preset",
+        type=str,
+        choices=[
+            "ultrafast",
+            "superfast",
+            "veryfast",
+            "faster",
+            "fast",
+            "medium",
+            "slow",
+            "slower",
+            "veryslow",
+        ],
+        default="medium",
+        help="Set the encoding speed/efficiency preset (default: %(default)s)",
+    )
 
     # Purge subcommand
     purge_parser = subparsers.add_parser(

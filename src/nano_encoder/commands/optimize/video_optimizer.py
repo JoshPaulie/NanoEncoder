@@ -9,11 +9,14 @@ from ...utils import get_video_duration, humanize_duration, humanize_file_size
 class VideoOptimizer:
     """Handles video encoding operations using ffmpeg."""
 
-    def __init__(self, video_file: Path, crf: int, downscale: int | None = None) -> None:
+    def __init__(
+        self, video_file: Path, crf: int, downscale: int | None = None, preset: str = "medium"
+    ) -> None:
         # User args
         self.input_file = video_file
         self.crf = crf
         self.downscale = downscale
+        self.preset = preset
 
         # The resulting "optimized" file. Starts with ".optimizing" label
         self.output_file = self._create_optimizing_output_path()
@@ -50,7 +53,7 @@ class VideoOptimizer:
             *["-i", str(self.input_file)],  # Input file
             *["-c:v", "libx265"],  # HEVC (aka) h.265
             *["-crf", str(self.crf)],  # Constant refresh rate
-            *["-preset", "medium"],  # Compression/efficiency presets
+            *["-preset", self.preset],  # Compression/efficiency presets
             *["-threads", "0"],  # Use all available threads
             *["-c:a", "copy"],  # Copy audio "as is"
             *["-c:s", "copy"],  # Copy subtitles "as is"
