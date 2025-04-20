@@ -3,14 +3,15 @@ from pathlib import Path
 from rich.progress import track
 from send2trash import send2trash
 
+from ..cli import PurgeArgs
 from ..console import console
 from ..logger import logger
 from ..utils import VIDEO_FILE_EXTENSIONS, find_all_video_files, has_optimized_version
 
 
-def handle_purge_command(args) -> None:
+def handle_purge_command(args: PurgeArgs) -> None:
     try:
-        PurgeDirectory(args.directory, args.permanent).purge()
+        PurgeDirectory(args).purge()
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
         logger.error(str(e))
         raise
@@ -23,9 +24,10 @@ def handle_purge_command(args) -> None:
 class PurgeDirectory:
     """Manages purging of original video files which have optimized versions."""
 
-    def __init__(self, directory: Path, permanent: bool = False) -> None:
-        self.directory = directory
-        self.permanent = permanent
+    def __init__(self, args: PurgeArgs) -> None:
+        self.args = args
+        self.directory = self.args.directory
+        self.permanent = self.args.permanent
 
     def _find_original_files_to_purge(self) -> list[Path]:
         """Scan directory for candidate original video files to purge."""

@@ -16,6 +16,7 @@ from rich.progress import (
 from rich.table import Table
 from rich.text import Text
 
+from ..cli import HealthArgs
 from ..console import console
 from ..logger import DEBUG_LOG_FILE, logger
 from ..utils import (
@@ -27,9 +28,10 @@ from ..utils import (
 )
 
 
-def handle_health_command(args) -> None:
+def handle_health_command(args: HealthArgs) -> None:
     try:
-        HealthChecker(args.directory, args.sample_ratio, args.all).check_health()
+        validate_directory(args.directory)
+        HealthChecker(args).check_health()
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
         logger.error(str(e))
         raise
@@ -61,11 +63,11 @@ class HealthChecker:
     health_table.add_column("Size diff")  # + / -
     health_table.caption = f"Also logged at {DEBUG_LOG_FILE.absolute()}"
 
-    def __init__(self, directory: Path, sample_ratio: float, process_all: bool = False) -> None:
-        validate_directory(directory)
-        self.directory = directory
-        self.sample_ratio = sample_ratio
-        self.process_all = process_all
+    def __init__(self, args: HealthArgs) -> None:
+        self.args = args
+        self.directory = self.args.directory
+        self.sample_ratio = self.args.sample_ratio
+        self.process_all = self.args.all
 
     @staticmethod
     def _is_same_resolution(video1: Path, video2: Path):

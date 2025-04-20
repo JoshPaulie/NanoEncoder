@@ -2,15 +2,16 @@ from pathlib import Path
 
 from rich.table import Table
 
+from ..cli import UntagArgs
 from ..console import console
 from ..logger import logger
 from ..utils import find_all_video_files, validate_directory
 
 
-def handle_untag_command(args) -> None:
+def handle_untag_command(args: UntagArgs) -> None:
     try:
         validate_directory(args.directory)
-        UntagDirectory(args.directory).untag()
+        UntagDirectory(args).untag()
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
         logger.error(str(e))
         raise
@@ -20,8 +21,9 @@ def handle_untag_command(args) -> None:
 
 
 class UntagDirectory:
-    def __init__(self, directory: Path) -> None:
-        self.directory = directory
+    def __init__(self, args: UntagArgs) -> None:
+        self.args = args
+        self.directory = self.args.directory
         self.videos = find_all_video_files(self.directory, optimized_only=True)
         if not self.videos:
             raise ValueError(f"There are no videos to untag in '{self.directory.name}'.")  # todo
