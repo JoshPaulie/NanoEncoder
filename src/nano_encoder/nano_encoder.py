@@ -2,9 +2,16 @@ import shutil
 import sys
 import traceback
 
-from .cli import create_parser
+from .cli import (
+    HealthArgs,
+    OptimizeArgs,
+    PurgeArgs,
+    UntagArgs,
+    dataclass_from_namespace,
+    primary_parser,
+)
 from .commands.healthcheck import handle_health_command
-from .commands.optimize.optimize import handle_optimize_command
+from .commands.optimize import handle_optimize_command
 from .commands.purge import handle_purge_command
 from .commands.untag import handle_untag_command
 from .console import console
@@ -33,7 +40,7 @@ def ffmpeg_check() -> None:
 
 
 def main() -> None:
-    parser = create_parser()
+    parser = primary_parser
     args = parser.parse_args()
 
     welcome_message()
@@ -42,16 +49,22 @@ def main() -> None:
     try:
         match args.command:
             case "optimize":
-                handle_optimize_command(args)
+                optimize_args = dataclass_from_namespace(OptimizeArgs, args)
+                handle_optimize_command(optimize_args)
+
             case "purge":
-                handle_purge_command(args)
+                purge_args = dataclass_from_namespace(PurgeArgs, args)
+                handle_purge_command(purge_args)
+
             case "health":
-                handle_health_command(args)
+                health_args = dataclass_from_namespace(HealthArgs, args)
+                handle_health_command(health_args)
+
             case "untag":
-                handle_untag_command(args)
+                untag_args = dataclass_from_namespace(UntagArgs, args)
+                handle_untag_command(untag_args)
     except Exception as e:
-        if args.dev:
-            traceback.print_exc()
+        traceback.print_exc()
         parser.exit(1, str(e) + "\n")
 
 

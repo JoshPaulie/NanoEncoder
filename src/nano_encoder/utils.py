@@ -6,8 +6,6 @@ from .exceptions import EmptyDirectory
 
 # --- Constants ---
 VIDEO_FILE_EXTENSIONS: list[str] = ["mov", "mkv", "mp4"]
-CRF_MIN: int = 0
-CRF_MAX: int = 51
 
 
 # --- Utility Functions ---
