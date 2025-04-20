@@ -1,5 +1,4 @@
 import subprocess
-import sys
 import time
 from pathlib import Path
 
@@ -22,16 +21,13 @@ from ..utils import (
     humanize_duration,
     humanize_file_size,
     shorten_path,
-    validate_directory,
 )
+from .base_command import BaseCommand
 
 
 def handle_optimize_command(args: OptimizeArgs) -> None:
     try:
-        # User input validation
-        validate_directory(args.directory)
-
-        OptimizeDirectory(args).optimize()
+        OptimizeDirectory(args).execute()
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
         logger.error(str(e))
         raise
@@ -41,7 +37,7 @@ def handle_optimize_command(args: OptimizeArgs) -> None:
         logger.info(message)
 
 
-class OptimizeDirectory:
+class OptimizeDirectory(BaseCommand):
     """Handles optimizing videos in a directory using VideoEncoder."""
 
     ProgressBar = Progress(
@@ -55,14 +51,65 @@ class OptimizeDirectory:
     )
 
     def __init__(self, args: OptimizeArgs) -> None:
-        self.args = args
-        self.directory = self.args.directory.resolve()
-        self.crf = self.args.crf
-        self.preset = self.args.preset
-        self.downscale = self.args.downscale
+        super().__init__(args.directory)
+        self.crf = args.crf
+        self.preset = args.preset
+        self.downscale = args.downscale
         self.total_disk_space_change = 0
         self.processing_duration = 0
         self.video_files = self._find_video_files()
+
+    def execute(self) -> None:
+        """Process each video file in the directory."""
+        if not self.video_files:
+            console.print("There's no original videos to optimize!")
+            console.print("Another job well done!")
+            logger.info("Found no original videos to optimize.")
+            return
+
+        logger.info(f"Starting processing for '{self.directory}'..")
+        start_time = time.perf_counter()
+        console.print()
+
+        with self.ProgressBar as progress:
+            overall_progress_id = progress.add_task(
+                f"Optimizing '{shorten_path(self.directory, 3)}'",
+                total=len(self.video_files),
+                eta="",
+            )
+
+            for indx, video in enumerate(self.video_files):
+                current_video_progress_id = progress.add_task(f"[yellow]{video.name}", total=None, eta="")
+
+                try:
+                    optimizer = VideoOptimizer(video, self)
+                    optimizer.optimize()
+                    self.total_disk_space_change += optimizer.disk_space_change
+                except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                    logger.error(f"Failed to process '{video}': {str(e)}")
+
+                progress.update(current_video_progress_id, total=1, completed=1)
+                progress.update(current_video_progress_id, description=f"[green]{video.name}")
+
+                videos_remaining = len(self.video_files) - (indx + 1)
+                progress.update(
+                    overall_progress_id,
+                    advance=1,
+                    eta=f"Eta: {self._get_eta(videos_remaining, self._average_video_length(), optimizer.speed_factor)}",
+                )
+
+            progress.update(overall_progress_id, description=f"[green]{self.directory.name}", eta="")
+
+        self.processing_duration = time.perf_counter() - start_time
+
+        logger.info(
+            f"Completed optimizing '{self.directory}'. "
+            f"Total duration: {humanize_duration(self.processing_duration)}. "
+            f"Total disk space: {humanize_file_size(abs(self.total_disk_space_change))} "
+            f"{'saved' if self.total_disk_space_change > 0 else 'increased'}."
+        )
+
+        self._all_done_message()
 
     def _video_already_optimized(self, file_path: Path) -> bool:
         """Check if the file already has an optimized version."""
@@ -86,19 +133,13 @@ class OptimizeDirectory:
             and not self._video_already_optimized(video)
         ]
 
-        if not video_files:
-            console.print("there's no original videos to optimize!")
-            console.print("Another job well done!")
-            logger.info("Found no original videos to optimize.")
-            sys.exit()
-
         plural = "s" if len(video_files) != 1 else ""
         console.print(f"found [blue]{len(video_files)}[/] original video{plural}.")
         logger.info(f"Found {len(video_files)} original video files in '{self.directory.name}'.")
         return sorted(video_files)
 
     def _all_done_message(self) -> None:
-        # User output
+        """Display completion message with statistics."""
         console.print()
         console.print(f"[green]All done[/] optimizing [b]{self.directory.name}[/]!")
         console.print(f"Total duration: [yellow]{humanize_duration(self.processing_duration)}")
@@ -109,68 +150,14 @@ class OptimizeDirectory:
         console.print(f" {'[green]saved[/]' if self.total_disk_space_change > 0 else '[red]increased[/]'}")
         console.print()
 
-    def optimize(self) -> None:
-        """Process each video file in the directory."""
-        logger.info(f"Starting processing for '{self.directory}'..")
-        start_time = time.perf_counter()
-        console.print()
-
-        with self.ProgressBar as progress:
-            # Create "overall" progress bar for the entire directory
-            overall_progress_id = progress.add_task(
-                f"Optimizing '{shorten_path(self.directory, 3)}'",
-                total=len(self.video_files),
-                eta="",
-            )
-
-            for indx, video in enumerate(self.video_files):
-                # Add new progress bar for each video
-                current_video_progress_id = progress.add_task(f"[yellow]{video.name}", total=None, eta="")
-
-                try:
-                    optimizer = VideoOptimizer(video, self.args)
-                    optimizer.optimize()
-                    self.total_disk_space_change += optimizer.disk_space_change
-                except (subprocess.CalledProcessError, FileNotFoundError) as e:
-                    logger.error(f"Failed to process '{video}': {str(e)}")
-
-                # Update video progress bars
-                progress.update(current_video_progress_id, total=1, completed=1)
-                progress.update(current_video_progress_id, description=f"[green]{video.name}")
-
-                # Advance overall progress bar, update ETA
-                videos_remaining = len(self.video_files) - (indx + 1)
-                progress.update(
-                    overall_progress_id,
-                    advance=1,
-                    eta=f"Eta: {self._get_eta(videos_remaining, self._average_video_length(), optimizer.speed_factor)}",
-                )
-
-            # Update overall progress
-            progress.update(overall_progress_id, description=f"[green]{self.directory.name}", eta="")
-
-        # Elapsed time from optimizing directory
-        self.processing_duration = time.perf_counter() - start_time
-
-        # Log processing information
-        logger.info(
-            (
-                f"Completed optimizing '{self.directory}'. "
-                f"Total duration: {humanize_duration(self.processing_duration)}. "
-                f"Total disk space: {humanize_file_size(abs(self.total_disk_space_change))} "
-                f"{'saved' if self.total_disk_space_change > 0 else 'increased'}."
-            )
-        )
-
-        self._all_done_message()
-
-    def _average_video_length(self):
-        total_video_length = sum([get_video_duration(video) for video in self.video_files])
-        video_count = len(self.video_files)
-        return round(total_video_length / video_count)
+    def _average_video_length(self) -> float:
+        """Calculate average video duration in the directory."""
+        total_video_length = sum(get_video_duration(video) for video in self.video_files)
+        return round(total_video_length / len(self.video_files))
 
     @staticmethod
-    def _get_eta(videos_remaining: int, average_video_length: int, speed: float):
+    def _get_eta(videos_remaining: int, average_video_length: float, speed: float) -> str:
+        """Calculate estimated time remaining."""
         time_left = videos_remaining * average_video_length
         time_remaining = time_left / speed
         return humanize_duration(time_remaining)
@@ -179,23 +166,17 @@ class OptimizeDirectory:
 class VideoOptimizer:
     """Handles video encoding operations using ffmpeg."""
 
-    def __init__(self, video_file: Path, args: OptimizeArgs) -> None:
-        # User args
+    def __init__(self, video_file: Path, optimize_dir: OptimizeDirectory) -> None:
         self.input_file = video_file
-        self.crf = args.crf
-        self.downscale = args.downscale
-        self.preset = args.preset
-
-        # The resulting "optimized" file. Starts with ".optimizing" label
+        self.crf = optimize_dir.crf
+        self.downscale = optimize_dir.downscale
+        self.preset = optimize_dir.preset
         self.output_file = self._create_optimizing_output_path()
-
-        # Remove unfinished field if present
         self._cleanup_existing_optimizing_file()
-
-        # Stats for report
         self.original_size = self.input_file.stat().st_size
         self.encoding_duration = 0.0
         self.disk_space_change = 0
+        self.speed_factor = 0.0
 
     def _cleanup_existing_optimizing_file(self) -> None:
         """Delete existing .optimizing file if present."""

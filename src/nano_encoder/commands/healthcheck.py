@@ -24,14 +24,13 @@ from ..utils import (
     get_video_resolution,
     has_optimized_version,
     humanize_file_size,
-    validate_directory,
 )
+from .base_command import BaseCommand
 
 
 def handle_health_command(args: HealthArgs) -> None:
     try:
-        validate_directory(args.directory)
-        HealthChecker(args).check_health()
+        HealthChecker(args).execute()
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
         logger.error(str(e))
         raise
@@ -41,9 +40,7 @@ def handle_health_command(args: HealthArgs) -> None:
         logger.info(message)
 
 
-class HealthChecker:
-    """Handles health check operations to validate optimized videos against their originals."""
-
+class HealthChecker(BaseCommand):
     ProgressBar = Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -60,24 +57,67 @@ class HealthChecker:
     health_table.add_column("Optimized")
     health_table.add_column("SSIM")
     health_table.add_column("Grade")
-    health_table.add_column("Size diff")  # + / -
+    health_table.add_column("Size diff")
     health_table.caption = f"Also logged at {DEBUG_LOG_FILE.absolute()}"
 
     def __init__(self, args: HealthArgs) -> None:
-        self.args = args
-        self.directory = self.args.directory
-        self.sample_ratio = self.args.sample_ratio
-        self.process_all = self.args.all
+        super().__init__(args.directory)
+        self.sample_ratio = args.sample_ratio
+        self.process_all = args.all
+        self.sample = self._get_sample()
 
-    @staticmethod
-    def _is_same_resolution(video1: Path, video2: Path):
-        return get_video_resolution(video1) == get_video_resolution(video2)
+    def execute(self) -> None:
+        """Execute the health check operation."""
+        with self.ProgressBar as progress:
+            overall_progress_id = progress.add_task(
+                f"Performing healthcheck for [blue]{self.directory.name}[/]..",
+                total=len(self.sample),
+            )
+
+            for original_video, optimized_video in self.sample:
+                self._check_video_pair(original_video, optimized_video)
+                progress.update(overall_progress_id, advance=1)
+
+            progress.update(
+                overall_progress_id,
+                description=f"[green]Finished[/] performing healthcheck for {self.directory}",
+            )
+
+        console.print(self.health_table)
+
+    def _check_video_pair(self, original_video: Path, optimized_video: Path) -> None:
+        """Compare an original-optimized video pair."""
+        current_pair = f"'{original_video.name}' & '{optimized_video.name}'"
+        size_diff = optimized_video.stat().st_size - original_video.stat().st_size
+        diff_sign = "+" if size_diff >= 0 else "-"
+
+        if not self._is_same_resolution(original_video, optimized_video):
+            self.health_table.add_row(
+                Text(original_video.name),
+                Text(optimized_video.name),
+                Text("0"),
+                Text("Varying resolutions, unable to compare."),
+                Text(diff_sign + humanize_file_size(abs(size_diff))),
+                style="red",
+            )
+            return
+
+        logger.info(f"Starting SSIM comparison for {current_pair}.")
+        ssim = self._compare_videos_ssim(original_video, optimized_video)
+        logger.info(f"{current_pair} = {ssim} SSIM")
+        ssim_grade, healthcolor = self._grade_ssim(ssim)
+
+        self.health_table.add_row(
+            Text(original_video.name),
+            Text(optimized_video.name),
+            Text(str(round(ssim, 3))),
+            Text(ssim_grade),
+            Text(diff_sign + humanize_file_size(abs(size_diff))),
+            style="red" if size_diff >= 0 else healthcolor,
+        )
 
     def _pair_videos(self) -> list[tuple[Path, Path]]:
-        """
-        Create pairs of original and optimized videos.
-        Iterates over all original-only videos and finds their optimized counterparts.
-        """
+        """Create pairs of original and optimized videos."""
         pairs: list[tuple[Path, Path]] = []
         original_files = find_all_video_files(self.directory, originals_only=True)
         for original in original_files:
@@ -90,7 +130,8 @@ class HealthChecker:
     def _get_sample(self) -> list[tuple[Path, Path]]:
         """
         Sample a percentage of the paired videos to check.
-        If process_all is True, returns all video pairs.
+
+        If --all flag was passed, returns all video pairs.
         Otherwise, sample_ratio is used to return a percentage of videos (1 minimum)
         """
         video_pairs = self._pair_videos()
@@ -100,8 +141,13 @@ class HealthChecker:
         sample_size = math.floor(len(video_pairs) * self.sample_ratio) or 1
         return random.choices(video_pairs, k=sample_size)
 
+    @staticmethod
+    def _is_same_resolution(video1: Path, video2: Path) -> bool:
+        """Check if two videos have the same resolution."""
+        return get_video_resolution(video1) == get_video_resolution(video2)
+
     def _compare_videos_ssim(self, original_file: Path, optimized_file: Path) -> float:
-        """Perform an SSIM comparison using ffmpeg between a original and optimized video."""
+        """Perform SSIM comparison between two videos."""
         command = [
             "ffmpeg",
             *["-i", str(original_file)],
@@ -130,65 +176,9 @@ class HealthChecker:
             raise ValueError("SSIM score not found in ffmpeg output")
         return float(matches[-1])
 
-    def check_health(self) -> None:
-        """Checks the health of optimized videos by comparing each original-optimized pair using SSIM."""
-        sample = self._get_sample()
-
-        with self.ProgressBar as progress:
-            # Create "overall" progress bar for the entire directory
-            overall_progress_id = progress.add_task(
-                f"Performing healthcheck for [blue]{self.directory.name}[/]..",
-                total=len(sample),
-            )
-
-            for original_video, optimized_video in sample:
-                # String name for pair
-                current_pair = f"'{original_video.name}' & '{optimized_video.name}'"
-
-                # Compare sizes
-                size_diff = optimized_video.stat().st_size - original_video.stat().st_size
-                diff_sign = "+" if size_diff >= 0 else "-"
-
-                # Skip iteration if videos are different resolutions
-                if not self._is_same_resolution(original_video, optimized_video):
-                    self.health_table.add_row(
-                        Text(original_video.name),
-                        Text(optimized_video.name),
-                        Text("0"),
-                        Text("Varying resolutions, unable to compare."),
-                        Text(diff_sign + humanize_file_size(abs(size_diff))),
-                        style="red",
-                    )
-                    progress.update(overall_progress_id, advance=1)
-                    continue
-
-                # Perform compairson
-                logger.info(f"Starting SSIM comparison for {current_pair}.")
-                ssim = self._compare_videos_ssim(original_video, optimized_video)
-                logger.info(f"{current_pair} = {ssim} SSIM")
-                ssim_grade, healthcolor = self._grade_ssim(ssim)
-
-                self.health_table.add_row(
-                    Text(original_video.name),
-                    Text(optimized_video.name),
-                    Text(str(round(ssim, 3))),
-                    Text(ssim_grade),
-                    Text(diff_sign + humanize_file_size(abs(size_diff))),
-                    style="red" if size_diff >= 0 else healthcolor,
-                )
-
-                progress.update(overall_progress_id, advance=1)
-
-            progress.update(
-                overall_progress_id,
-                description=f"[green]Finished[/] performing healthcheck for {self.directory}",
-            )
-
-        console.print(self.health_table)
-
     @staticmethod
     def _grade_ssim(score: float) -> tuple[str, str]:
-        """Grades the SSIM score into descriptive text."""
+        """Grade SSIM score and return description and color."""
         score = round(score, 3)
         if score == 1.0:
             return "Identical", "green"
