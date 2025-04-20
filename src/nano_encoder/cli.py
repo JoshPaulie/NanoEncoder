@@ -65,6 +65,13 @@ def create_parser() -> argparse.ArgumentParser:
         "purge", help="Purge (delete) original video files which have accompanying optimized version"
     )
     purge_parser.add_argument("directory", type=Path, help="Path to the target directory")
+    purge_parser.add_argument(
+        "-p",
+        "--perm",
+        "--permanent",
+        action="store_true",
+        help="Permanently delete files instead of sending them to trash",
+    )
 
     # Healthcheck subcommand
     health_check_parser = subparsers.add_parser(

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from rich.progress import track
+from send2trash import send2trash
 
 from ..console import console
 from ..logger import logger
@@ -9,7 +10,7 @@ from ..utils import VIDEO_FILE_EXTENSIONS, find_all_video_files, has_optimized_v
 
 def handle_purge_command(args) -> None:
     try:
-        PurgeDirectory(args.directory).purge()
+        PurgeDirectory(args.directory, args.permanent).purge()
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
         logger.error(str(e))
         raise
@@ -22,8 +23,9 @@ def handle_purge_command(args) -> None:
 class PurgeDirectory:
     """Manages purging of original video files which have optimized versions."""
 
-    def __init__(self, directory: Path) -> None:
+    def __init__(self, directory: Path, permanent: bool = False) -> None:
         self.directory = directory
+        self.permanent = permanent
 
     def _find_original_files_to_purge(self) -> list[Path]:
         """Scan directory for candidate original video files to purge."""
@@ -53,7 +55,11 @@ class PurgeDirectory:
             console.print(f" - {orig.name} → {orig.with_name(f'{orig.stem}.optimized{orig.suffix}').name}")
         print()
 
-        confirm = console.input("Confirm deletion of these ORIGINAL files? ([i]Cannot be undone![/]) [y/N]: ")
+        confirm = console.input(
+            "Confirm deletion of these ORIGINAL files? [y/N]: "
+            if self.permanent
+            else "Confirm sending of these ORIGINAL files to recycling bin/trash? [y/N]: "
+        )
         if confirm.lower() != "y":
             console.print("Got it! No files deleted.")
             logger.info("User declined to purge originals.")
@@ -88,7 +94,7 @@ class PurgeDirectory:
         for orig in originals:
             print(f"Deleting '{orig}'.")
             logger.info(f"Purged '{orig}'.")
-            orig.unlink()
+            orig.unlink() if self.permanent else send2trash(orig)
 
         purged_message = f"Purged {len(originals)} original files"
         print(purged_message)
