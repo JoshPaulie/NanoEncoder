@@ -34,7 +34,7 @@ def create_parser() -> argparse.ArgumentParser:
     optimize_parser.add_argument(
         "--crf",
         type=int,
-        default=23,
+        default=28,
         help=f"Constant rate factor ({CRF_MIN}-{CRF_MAX}, default: %(default)s)",
     )
     optimize_parser.add_argument(

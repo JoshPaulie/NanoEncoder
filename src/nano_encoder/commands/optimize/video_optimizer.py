@@ -50,7 +50,7 @@ class VideoOptimizer:
             *["-i", str(self.input_file)],  # Input file
             *["-c:v", "libx265"],  # HEVC (aka) h.265
             *["-crf", str(self.crf)],  # Constant refresh rate
-            *["-preset", "fast"],  # NanoEncoder default: fast
+            *["-preset", "medium"],  # Compression/efficiency presets
             *["-threads", "0"],  # Use all available threads
             *["-c:a", "copy"],  # Copy audio "as is"
             *["-c:s", "copy"],  # Copy subtitles "as is"
