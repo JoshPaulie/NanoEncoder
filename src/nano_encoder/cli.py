@@ -141,7 +141,9 @@ optimize_parser.add_argument(
 purge_parser = subparsers.add_parser(
     "purge", help="Purge (delete) original video files which have accompanying optimized version"
 )
+
 purge_parser.add_argument("directory", type=Path, help="Path to the target directory")
+
 purge_parser.add_argument(
     "-p",
     "--perm",
@@ -154,17 +156,20 @@ purge_parser.add_argument(
 health_check_parser = subparsers.add_parser(
     "health", help="After encoding, check the quality of your optimized files"
 )
+
 health_check_parser.add_argument(
     "directory",
     type=Path,
     help="Check a small sample of original and optimized files, comparing similarity",
 )
+
 health_check_parser.add_argument(
     "--sample-ratio",
     type=float,
     help="Percentage of video to check (ignored if --all is set)",
     default=0.05,
 )
+
 health_check_parser.add_argument(
     "--all",
     action="store_true",
@@ -173,4 +178,5 @@ health_check_parser.add_argument(
 
 # --- Untag command ---
 untag_parser = subparsers.add_parser("untag", help="Remove '.optimized' from file names")
+
 untag_parser.add_argument("directory", type=Path, help="Path to the target directory")
