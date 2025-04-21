@@ -11,7 +11,7 @@ If an outage occurs while optimizing, simply re-run the command against the same
 
 After a directory is fully processed, you may run the [health](health.md) command to get a grade on how well it did, the [purge](purge.md) command to remove the original video files, and the [untag](untag.md) command to safely remove the `.optimized` tags from the file names.
 
-### `--crf` flag (defualt: 28)
+### `--crf` flag (default: 28)
 Use the crf to adjust the tradeoff between detail preservation and file size. It can be anywhere from 0-51. The "best" value is subject and varies between files. It's encouraged you experiment with a small sample of videos (like if you're optimizing a season of a show), at varying crf values, and visually comparing the results. A feature will be released soon™ to aid with process.
 
 I haven't had any issues with the default 28.
