@@ -1,3 +1,6 @@
+---
+title: Purge Command
+---
 # `purge`
 The `purge` command helps you clean up your original video files after you've confirmed the optimized versions are satisfactory. It will only remove original files that have corresponding optimized versions.
 
@@ -12,7 +15,7 @@ It's recommended to run the [health](health.md) command first to validate your o
 Instead of moving files to the trash, permanently delete them. This is useful for saving space on systems where the trash is on the same drive, but use with caution as it cannot be undone.
 
 {: .warning }
-Using --perm will immediately and permanently delete your original files. Make sure you have verified your optimized files first!
+Using `--perm` will immediately and permanently delete your original files. Make sure you have verified your optimized files first!
 
 ---
 Full help output:

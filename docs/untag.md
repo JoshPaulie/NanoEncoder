@@ -1,8 +1,11 @@
+---
+title: Untag Command
+---
 # `untag`
 The `untag` command removes the ".optimized" suffix from your optimized video files. Best for after you removed originals with [purge](purge.md)
 
-{: .warning }
-This operation cannot be undone, but the files themselves are unchanged, only their names are modified.
+{: .note }
+This operation cannot be (easily) undone. The files themselves are unchanged, only their names are modified. Reveresing would simply be a matter of renaming the files, adding them back in.
 
 ---
 Full help output:
