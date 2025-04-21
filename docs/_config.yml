@@ -3,3 +3,8 @@ plugins:
   - jekyll-remote-theme
 minima:
   skin: dark
+  nav_pages:
+    - optimize.md
+    - health.md
+    - purge.md
+    - untag.md
