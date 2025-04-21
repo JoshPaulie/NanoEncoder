@@ -5,9 +5,9 @@ title: Homepage
 Here we'll detail the usage and behavior of NanoEncoder, as well as explain a bit about h.265 and its features.
 
 ## Commands
-- [Optimize](optimize.md)
-- [Health](health.md)
-- [Purge](purge.md)
-- [Untag](untag.md)
+- [Optimize](commands/optimize.md)
+- [Health](commands/health.md)
+- [Purge](commands/purge.md)
+- [Untag](commands/untag.md)
 
 ## About FFmpeg
