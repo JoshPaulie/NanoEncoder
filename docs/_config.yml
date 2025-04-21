@@ -6,6 +6,7 @@ color_scheme: dark
 
 # Set a path/url to a logo that will be displayed instead of the title
 logo: "/assets/logo.png"
+favicon_ico: "/assets/logo.ico"
 
 nav_enabled: true
 
