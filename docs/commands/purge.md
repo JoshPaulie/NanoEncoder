@@ -1,5 +1,8 @@
 ---
 title: Purge Command
+layout: default
+parent: Commands
+nav_order: 3
 ---
 # `purge`
 The `purge` command helps you clean up your original video files after you've confirmed the optimized versions are satisfactory. It will only remove original files that have corresponding optimized versions.

@@ -1,5 +1,8 @@
 ---
 title: Health Command
+layout: default
+parent: Commands
+nav_order: 2
 ---
 # `health`
 The `health` command is used to validate the quality of your optimized videos by comparing them to their originals. It uses FFmpeg's SSIM (Structural Similarity Index Measure) analysis to grade how well the optimization preserved video quality.

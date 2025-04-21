@@ -1,5 +1,8 @@
 ---
 title: Optimize Command
+layout: default
+parent: Commands
+nav_order: 1
 ---
 # `optimize`
 The `optimize` command is the primary command. It finds all of the videos in a target directory, and re-encodes them into HEVC/h.265.
