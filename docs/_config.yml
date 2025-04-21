@@ -47,7 +47,7 @@ callouts:
   tip:
     title: Tip
     color: green
-  
+
   important:
     title: Important
     color: purple
@@ -58,4 +58,4 @@ callouts:
 
   caution:
     title: Caution
-    title: red
+    color: red
