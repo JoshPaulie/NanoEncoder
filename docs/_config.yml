@@ -38,6 +38,11 @@ callouts:
     title: Caution
     color: red
 
+# --- Auxiliary links ---
+aux_links:
+  "NanoEncoder on GitHub":
+    - "https://github.com/JoshPaulie/NanoEncoder"
+
 # --- Footer ---
 footer_content: "BSD 3-Clause License"
 
