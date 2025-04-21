@@ -4,6 +4,9 @@ plugins:
 
 color_scheme: dark
 
+# Set a path/url to a logo that will be displayed instead of the title
+logo: "/assets/logo.png"
+
 nav_enabled: true
 
 # Enable or disable the site search
@@ -35,3 +38,24 @@ search:
   button: false
   # Focus the search input by pressing `ctrl + focus_shortcut_key` (or `cmd + focus_shortcut_key` on macOS)
   focus_shortcut_key: "k"
+
+callouts:
+  info:
+    title: Note
+    color: blue
+
+  tip:
+    title: Tip
+    color: green
+  
+  important:
+    title: Important
+    color: purple
+
+  warning:
+    title: Warning
+    color: yellow
+
+  caution:
+    title: Caution
+    title: red
