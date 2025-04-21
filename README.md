@@ -1,4 +1,6 @@
-<img src="imgs/Banner.png" width="600">
+<p align="center">
+  <img src="imgs/Banner.png" width="600">
+</p>
 
 # NanoEncoder
 A lightweight ffmpeg wrapper to reduce your video collection size (while preserving quality)
