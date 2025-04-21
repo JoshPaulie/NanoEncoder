@@ -13,8 +13,8 @@ Use the crf to adjust the tradeoff between detail preservation and file size. It
 
 I haven't had any issues with the default 28.
 
-> [!warning]
-> Too low of CRF (<18) may actually INCREASE the size of your file! NanoEncoder will warn you of file increases.
+{: .warning }
+Too low of CRF (<18) may actually INCREASE the size of your file! NanoEncoder will warn you of file increases.
 
 Read the [about-crf.md](about‐crf.md) page
 
