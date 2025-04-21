@@ -10,7 +10,7 @@ The `optimize` command is the primary command. It finds all of the videos in a t
 - While it's processing a video, it will have an **.optimizing** tag (i.e. `video.optimizing.mp4`)
 - After processing, the tag will change to **.optimized** (i.e. `video.optimized.mp4`)
 
-If an outage occurs while optimizing, simply re-run the command against the same directory. If a video with `.optimizing` is encountered, it is deleted and the original is reprocessed.
+If an outage occurs while optimizing, simply re-run the command against the same directory. When NanoEncoder encounters a file with `.optimizing` still in the name, it will delete the partially optimized file and re-encode the original.
 
 After a directory is fully processed, you may run the [health](health.md) command to get a grade on how well it did, the [purge](purge.md) command to remove the original video files, and the [untag](untag.md) command to safely remove the `.optimized` tags from the file names.
 
