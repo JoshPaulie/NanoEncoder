@@ -1,6 +1,35 @@
 # FAQ
 Well, more anticipated questions.
 
+### Why use a wrapper?
+Here's how NanoEncoder simplifies FFmpeg usage:
+
+1. **Batch Processing**: No need to write loops or scripts to handle multiple files
+2. **Crash Recovery**: Automatically detects and recovers from crashes/interruptions
+3. **Quality Control**: Built-in SSIM analysis to validate your encoding settings
+4. **Safer File Management**: 
+   - Moves originals to trash instead of permanent deletion
+   - Requires confirmation before deleting
+   - Won't delete originals until optimization is complete
+5. **Progress Tracking**:
+   - [Rich](https://github.com/Textualize/rich/) progress bars
+   - Time remaining estimates
+   - Space savings reports
+6. **Sane Defaults**:
+   - Uses recommended CRF values
+   - Enables multithreading
+   - Preserves subtitles and audio tracks
+7. **Simple CLI**:
+   - No need to remember FFmpeg parameters
+   - Simplified, clear, documented options
+   - Help text explains each setting
+8. **Compatibility**:
+   - Adds Apple/QuickTime compatibility flags
+   - Maintains directory hierarchy and file organization
+   - Preserves metadata
+
+FFmpeg is an incredibly powerful piece of software. The only intention of this project to make it more accessible for my friends, not try to shadow or downplay its significance. It's the heavylifter behind all of this.
+
 ### Can you add X flag?
 Depends. The current flags satisfy the 3 arguments which the [wiki](https://trac.ffmpeg.org/wiki/Encode/H.264#crf) suggest users pick, CRF + Preset + Tuning profile.
 
