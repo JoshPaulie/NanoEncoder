@@ -1,5 +1,6 @@
 ---
 title: About CRF
+nav_exclude: true
 ---
 # About CRF (Constant Rate Factor)
 CRF (Constant Rate Factor) is the primary quality/size control setting for h.265 and h.264 encoders. **It adjusts the trade-off between file size and visual quality** by dynamically allocating bits where needed. It's on by default, and is a major contributor to the size savings from h.265.

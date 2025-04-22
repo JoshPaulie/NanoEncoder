@@ -1,5 +1,6 @@
 ---
 title: FFmpeg Settings
+nav_exclude: true
 ---
 ## FFmpeg Settings
 The following command is what is ran against all found video files (by default)
