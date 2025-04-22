@@ -50,6 +50,7 @@ nen -h
 nen optimize '/media/series/The Office (US)' # Re-encode a directory with HEVC (h.265)
 nen health '/media/series/The Office (US)'  # Compare the original and optimized video files via SSIM
 nen purge '/media/series/The Office (US)'  # Safely remove original files (sends to trash)
+nen untag '/media/series/The Office (US)' # Remove the "tags" left behind by NanoEncoder
 
 nen optimize --crf 23 '/media/series/Berserk (1997)' # Re-encode at specified CRF (Default is 28)
 ```
@@ -59,7 +60,7 @@ nen optimize --crf 23 '/media/series/Berserk (1997)' # Re-encode at specified CR
 - Perfectly handles **multiple subtitle and audio tracks**[^1] (GREAT for anime)
 - **CPU Multithreading** by default
 - **Smart batch processing** skips already processed videos and recovers incomplete files
-- **Dynamic bit allocation** with [CRF](#about-crf)
+- **Dynamic bit allocation** with [CRF](docs/about-crf.md)
 - **High fault tolerance**! If you have a power outage while encoding, you can simply run the script against the same directory, and it will pick up at the video where it left off[^2]
 
 ### Safety Measures
@@ -68,20 +69,7 @@ nen optimize --crf 23 '/media/series/Berserk (1997)' # Re-encode at specified CR
 - Comprehensive logging: All operations are recorded in `~/NanoEncoder.log`, and FFmpeg logs  arerecorded in `~/NanoEncoder_ffmpeg.log`
 
 ## Quality of optimized videos
-Video quality will remain perceptively the same, unless it's an outrageously highly detailed video. You may see a decrease in quality, the higher the definition.
-
-### About CRF (Constant Rate Factor)
-CRF is the primary quality/size control setting for h.265 and h.264 encoders. It adjusts the trade-off between **file size** and **visual quality** by dynamically allocating bits where needed. It's on by default, and is a major contributor to the size savings from h.265.
-
-> [!note]
-> CRF is **not the same as bitrate**. It adapts per scene, saving space in simpler frames while preserving detail in complex ones.
-
-NanoEncoder defaults to **CRF 28**. Experiment with the `nen encode --crf` flag on a sample of your media, then process the rest.
-
-> [!warning]
-> Too low of CRF (<18) may actually INCREASE the size of your file!
->
-> How? Why? No idea. Just be aware. Always perform a small sample before processing an entire series.
+Video quality will remain perceptively the same, but you should sample h.265 on a small portion of (similar) media before wasting time processing a large amount of files with bad settings.
 
 ## ffmpeg settings
 The following command is what is ran against all found video files (by default)
