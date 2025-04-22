@@ -12,7 +12,7 @@ The `purge` command helps you clean up your original video files after you've co
 - Requires explicit confirmation before taking action
 - Will not remove files if any .optimizing files are present (unfinished optimization)
 
-It's recommended to run the [health](health.md) command first to validate your optimized files before purging the originals.
+It's important you manually check at least a few of your videos before purging. You could also run the [health](health.md) command to semi-validate your optimized files before purging the originals.
 
 ### `--permanent` flag (aliases: `--perm`, `-p`)
 Instead of moving files to the trash, permanently delete them. This is useful for saving space on systems where the trash is on the same drive, but use with caution as it cannot be undone.

@@ -5,14 +5,15 @@ parent: Commands
 nav_order: 2
 ---
 # `health`
-The `health` command is used to validate the quality of your optimized videos by comparing them to their originals. It uses FFmpeg's SSIM (Structural Similarity Index Measure) analysis to grade how well the optimization preserved video quality.
+The `health` command is used to validate the quality of your optimized videos by comparing them to their originals. It uses FFmpeg's builtin SSIM (Structural Similarity Index Measure) analysis to grade how well the optimization preserved video quality.
 
 - By default, it samples 5% of videos in a directory to save time
-- Each video pair receives a grade based on their SSIM score
+- Each video pair receives a SSIM score value
 - Size differences are also shown for each pair
 - All analysis is logged to `NanoEncoder_ffmpeg.log` for reference
 
-The grades are based on SSIM scores and range from "Identical" (1.0) to "Garbage" (<0.990). Generally, scores above 0.994 indicate the optimization was successful with minimal quality loss.
+{: .important }
+SSIM is the "best" comparison tool built into FFmpeg, but is very mathematically objective. The "best" tool (in terms of human perception) would be [Netflix's vmaf](https://github.com/Netflix/vmaf), which would require users installing on their machines. Perhaps in a future update.
 
 ### `--sample-ratio` flag (default: 0.05)
 Controls what percentage of video pairs to check. The default of 0.05 means 5% of videos will be checked. At least one video will always be checked, even if the ratio would select less than one video.
