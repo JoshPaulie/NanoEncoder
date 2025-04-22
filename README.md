@@ -17,7 +17,7 @@ A lightweight ffmpeg wrapper to reduce your video collection size (while preserv
 ## Installation
 ### Requirements
 - Python 3.13+ (if not installing via `uv`)
-- [FFmpeg](https://www.ffmpeg.org/download.html) installed system-wide
+- [FFmpeg](https://www.ffmpeg.org/download.html) (including `ffprobe`) 7.1+ installed system-wide
 
 ### uv (Recommended)
 > [!note]

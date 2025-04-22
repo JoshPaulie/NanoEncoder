@@ -7,7 +7,10 @@ Still in Beta! Full release coming soon!
 
 ## Requirements
 - Python 3.13+ (if not installing via `uv`)
-- [FFmpeg](https://www.ffmpeg.org/download.html) installed system-wide
+- [FFmpeg](https://www.ffmpeg.org/download.html) (including `ffprobe`) 7.1+ installed system-wide
+
+{: .tip }
+Older versions of FFmpeg aren't officially supported (by FFmpeg or NanoEncoder), but might work. Not interested in lowering this "soft" requirement. If it works on earlier, great! But 7.1+ is still recommended
 
 ## [uv](https://docs.astral.sh/uv/getting-started/installation/) (Recommended)
 `uv` doesn't require Python to be installed.
