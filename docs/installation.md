@@ -2,7 +2,7 @@
 title: Installation
 ---
 # Installation
-{ .note }
+{: .note }
 Still in Beta! Full release coming soon!
 
 ## Requirements
@@ -29,18 +29,22 @@ uv tool uninstall nanoencoder
 nen -h
 ```
 
-## [pipx](https://pipx.pypa.io/stable/installation/)
+## [pipx](https://pipx.pypa.io/stable/installation/) (Untested)
 ```bash
 # Install latest
 pipx install git+https://github.com/JoshPaulie/NanoEncoder.git
 
+# Update installation to latest
+pipx upgrade nanoencoder
+
+# Uninstall NanoEncoder
+pipx uninstall nanoencoder
+
 # Verify functionality
 nen -h
-
-# Update and uninstall functionality untested
 ```
 
-## Manual
+## Manual (Untested)
 Please consider using uvx/pipx.
 
 ```bash
@@ -48,4 +52,17 @@ git clone https://github.com/JoshPaulie/NanoEncoder.git
 cd NanoEncoder
 python -m venv .venv
 python -m pip install .
+
+# Update installation to latest
+git pull
+python -m pip install .
+
+# Uninstall NanoEncoder
+python -m pip uninstall .
+
+# Verify functionality
+nen -v
 ```
+
+---
+PRs welcome if you're interested in fleshing out alternative installation methods.
