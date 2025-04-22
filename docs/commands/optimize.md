@@ -34,12 +34,12 @@ Read the more at the [about-crf.md](../about-crf.md) page
 ### `--preset` flag (default: medium)
 FFmpeg offers presets to further control how much size is saved, but this time in relation to encoding times. NanoEncoder uses the same default FFmpeg does for this encoding type, **medium**. The [documentation](https://trac.ffmpeg.org/wiki/Encode/H.265#ConstantRateFactorCRF) says "use the slowest preset you have patience", as this will result in the smallest video sizes.
 
-Available presets: **ultrafast**, **superfast**, **veryfast**, **faster**, **fast**, **medium**, **slow**, **slower**, and **veryslow**.
+Available presets: `ultrafast`, `superfast`, `veryfast`, `faster`, `fast`, `medium`, `slow`, `slower`, and `veryslow`.
 
 ### `--tune` flag (default: None)
-Finally, for even further control, one can specify a tuning profile. Check out the official documentation for more info, but the most commonly used tuning profiles are also the most self evident, **grain** and **animation**.
+Finally, for even further control, one can specify a tuning profile. Check out the official documentation for more info, but the most commonly used tuning profiles are also the most self evident, `grain` and `animation`.
 
-Available tuning profiles: **animation**, **grain**, **stillimage**, **fastdecode**, and **zerolatency**.
+Available tuning profiles: `animation`, `grain`, `stillimage`, `fastdecode`, and `zerolatency`.
 
 ### `--downscale` flag (default: None)
 You can resize your videos to further decrease file sizes. This flag takes a width as input, and the height is determined by the aspect ratio of the video. Examples sizes are 720 & 1080.
