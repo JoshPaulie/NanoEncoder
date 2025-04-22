@@ -56,7 +56,6 @@ class HealthChecker(BaseCommand):
     health_table.add_column("Original")
     health_table.add_column("Optimized")
     health_table.add_column("SSIM")
-    health_table.add_column("Grade")
     health_table.add_column("Size diff")
     health_table.caption = f"Also logged at {DEBUG_LOG_FILE.absolute()}"
 
@@ -105,13 +104,12 @@ class HealthChecker(BaseCommand):
         logger.info(f"Starting SSIM comparison for {current_pair}.")
         ssim = self._compare_videos_ssim(original_video, optimized_video)
         logger.info(f"{current_pair} = {ssim} SSIM")
-        ssim_grade, healthcolor = self._grade_ssim(ssim)
+        healthcolor = self._ssim_health_color(ssim)
 
         self.health_table.add_row(
             Text(original_video.name),
             Text(optimized_video.name),
             Text(str(round(ssim, 3))),
-            Text(ssim_grade),
             Text(diff_sign + humanize_file_size(abs(size_diff))),
             style="red" if size_diff >= 0 else healthcolor,
         )
@@ -177,20 +175,12 @@ class HealthChecker(BaseCommand):
         return float(matches[-1])
 
     @staticmethod
-    def _grade_ssim(score: float) -> tuple[str, str]:
+    def _ssim_health_color(score: float) -> str:
         """Grade SSIM score and return description and color."""
         score = round(score, 3)
-        if score == 1.0:
-            return "Identical", "green"
-        elif score >= 0.998:
-            return "Excellent (visually identical)", "green"
-        elif score >= 0.996:
-            return "Good (nearly indistinguishable)", "green"
-        elif score >= 0.994:
-            return "OK (subtle artifacts)", "yellow"
-        elif score >= 0.992:
-            return "Fair (minor artifacts)", "yellow"
-        elif score >= 0.990:
-            return "Poor (noticeable artifacts)", "red"
+        if score >= 0.990:
+            return "green"
+        elif score >= 0.980:
+            return "yellow"
         else:
-            return "Garbage (not visually usable)", "red"
+            return "red"
