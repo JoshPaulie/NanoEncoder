@@ -34,7 +34,14 @@ Read the more at the [about-crf.md](docs/about-crf.md) page
 ### `--preset` flag (default: medium)
 FFmpeg offers presets to further control how much size is saved, but this time in relation to encoding times. NanoEncoder uses the same default FFmpeg does for this encoding type, **medium**. The [documentation](https://trac.ffmpeg.org/wiki/Encode/H.265#ConstantRateFactorCRF) says "use the slowest preset you have patience", as this will result in the smallest video sizes.
 
-### `--downscale` flag
+Available presets: **ultrafast**, **superfast**, **veryfast**, **faster**, **fast**, **medium**, **slow**, **slower**, and **veryslow**.
+
+### `--tune` flag (default: None)
+Finally, for even further control, one can specify a tuning profile. Check out the official documentation for more info, but the most commonly used tuning profiles are also the most self evident, **grain** and **animation**.
+
+Available tuning profiles: **animation**, **grain**, **stillimage**, **fastdecode**, and **zerolatency**.
+
+### `--downscale` flag (default: None)
 You can resize your videos to further decrease file sizes. This flag takes a width as input, and the height is determined by the aspect ratio of the video. Examples sizes are 720 & 1080.
 
 ---
@@ -42,6 +49,7 @@ Full help output:
 ```
 usage: NanoEncoder optimize [-h] [--crf CRF] [--downscale DOWNSCALE]
                             [--preset {ultrafast,superfast,veryfast,faster,fast,medium,slow,slower,veryslow}]
+                            [--tune {animation,grain,stillimage,fastdecode,zerolatency}]
                             directory
 
 positional arguments:
@@ -49,9 +57,15 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  --crf CRF             Constant rate factor (0-51, default: 28)
+  --crf CRF             Constant rate factor, between 0-51 (default 28))
   --downscale DOWNSCALE
-                        Downscale video resolution to a specified height (e.g., 1080 or 720). Maintains aspect ratio.
+                        Downscale video resolution to a specified height
+                        (e.g., 1080 or 720). Maintains aspect ratio (default
+                        None)
   --preset {ultrafast,superfast,veryfast,faster,fast,medium,slow,slower,veryslow}
-                        Set the encoding speed/efficiency preset (default: medium)
+                        Set the encoding speed/efficiency preset (default:
+                        medium)
+  --tune {animation,grain,stillimage,fastdecode,zerolatency}
+                        Set the tuning profile (default: None)
+
 ```
