@@ -26,6 +26,7 @@ class PurgeDirectory(BaseCommand):
     def __init__(self, args: PurgeArgs) -> None:
         super().__init__(args.directory)
         self.permanent = args.permanent
+        self.skip_confirmation = args.skip_confirmation
         self.original_files = self._find_original_files_to_purge()
 
     def execute(self) -> None:
@@ -50,7 +51,11 @@ class PurgeDirectory(BaseCommand):
             if self.permanent
             else "Send these ORIGINAL files to recycling bin/trash?"
         )
-        if self._confirm_purge(message):
+
+        # Skip confirmation if flag is set, otherwise ask for confirmation
+        if self.skip_confirmation or self._confirm_purge(message):
+            if self.skip_confirmation:
+                console.print("[red]Forcefully purging")
             self._purge_files()
 
     def _find_original_files_to_purge(self) -> list[Path]:
@@ -90,6 +95,7 @@ class PurgeDirectory(BaseCommand):
             logger.info(f"Purged '{orig}'.")
             orig.unlink() if self.permanent else send2trash(orig)
 
-        purged_message = f"Purged {len(self.original_files)} original files"
+        purge_type_msg = "Permanently" if self.permanent else "Sent to recycling bin"
+        purged_message = f"Purged {len(self.original_files)} original files ({purge_type_msg})"
         console.print(purged_message)
         logger.info(purged_message)

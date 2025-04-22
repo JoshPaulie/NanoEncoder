@@ -42,6 +42,7 @@ class OptimizeArgs:
 class PurgeArgs:
     directory: Path
     permanent: bool = False
+    skip_confirmation: bool = False
 
 
 @dataclass
@@ -180,6 +181,15 @@ purge_parser.add_argument(
     "--permanent",
     action="store_true",
     help="Permanently delete files instead of sending them to trash",
+)
+
+purge_parser.add_argument(
+    "--skip",
+    "--skip-confirmation",
+    "--force",
+    action="store_true",
+    dest="skip_confirmation",
+    help="Skip confirmation when purging original files (DANGEROUS!)",
 )
 
 # --- Health command ---

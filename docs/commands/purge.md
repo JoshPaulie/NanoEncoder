@@ -15,21 +15,26 @@ The `purge` command helps you clean up your original video files after you've co
 It's important you manually check at least a few of your videos before purging. You could also run the [health](health.md) command to semi-validate your optimized files before purging the originals.
 
 ### `--permanent` flag (aliases: `--perm`, `-p`)
-Instead of moving files to the trash, permanently delete them. This is useful for saving space on systems where the trash is on the same drive, but use with caution as it cannot be undone.
+Instead of moving files to the trash, permanently delete them. This is useful for saving space on systems where the trash is on the same drive.
 
 {: .warning }
-Using `--perm` will immediately and permanently delete your original files. Make sure you have verified your optimized files first!
+Using `--perm` will won't just delete the file, it will _unlink_ it. Recovering this data is tedious and requires expertice, and only possible if the data isn't already overwritten. Make sure you have verified your optimized files first!
+
+### `--skip-confirmation` (aliases: `--skip`, `--force`)
+Totally skip the confirmation step. Especially dangerous with the `--perm` flag, but good for automation.
 
 ---
 Full help output:
 ```
-usage: NanoEncoder purge [-h] [-p] directory
+usage: NanoEncoder purge [-h] [-p] [--skip] directory
 
 positional arguments:
-  directory          Path to the target directory
+  directory             Path to the target directory
 
 options:
-  -h, --help        show this help message and exit
+  -h, --help            show this help message and exit
   -p, --perm, --permanent
-                    Permanently delete files instead of sending them to trash
+                        Permanently delete files instead of sending them to trash
+  --skip, --skip-confirmation, --force
+                        Skip confirmation when purging original files (DANGEROUS!)
 ```
