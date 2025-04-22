@@ -58,6 +58,7 @@ class OptimizeDirectory(BaseCommand):
         self.downscale = args.downscale
         self.tune = args.tune
         self.force_encode = args.force_encode
+        self.halt_on_increase = args.halt_on_increase
         self.total_disk_space_change = 0
         self.processing_duration = 0
         self.skipped_hevc = []
@@ -88,7 +89,15 @@ class OptimizeDirectory(BaseCommand):
                 try:
                     optimizer = VideoOptimizer(video, self)
                     optimizer.optimize()
+
+                    if self.halt_on_increase and optimizer.disk_space_change < 0:
+                        message = f"Halting optimization as '{video.name}' size increased."
+                        logger.warning(message)
+                        console.print(f"\n[yellow]{message} Try increasing your CRF.")
+                        break
+
                     self.total_disk_space_change += optimizer.disk_space_change
+
                 except (subprocess.CalledProcessError, FileNotFoundError) as e:
                     logger.error(f"Failed to process '{video}': {str(e)}")
 

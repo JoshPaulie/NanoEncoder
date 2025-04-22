@@ -44,12 +44,16 @@ Available tuning profiles: `animation`, `grain`, `stillimage`, `fastdecode`, and
 ### `--downscale` flag (default: None)
 You can resize your videos to further decrease file sizes. This flag takes a width as input, and the height is determined by the aspect ratio of the video. Examples sizes are 720 & 1080.
 
+### `--halt-on-increase` flag (default: False)
+Stop the a directory if any video's output size is larger than its input size. This is useful as a size increases often means that the CRF value is too low for efficient compression.
+
 ---
 Full help output:
 ```
 usage: NanoEncoder optimize [-h] [--crf CRF] [--downscale DOWNSCALE]
                             [--preset {ultrafast,superfast,veryfast,faster,fast,medium,slow,slower,veryslow}]
                             [--tune {animation,grain,stillimage,fastdecode,zerolatency}]
+                            [--force] [--halt-on-increase]
                             directory
 
 positional arguments:
@@ -67,5 +71,6 @@ options:
                         medium)
   --tune {animation,grain,stillimage,fastdecode,zerolatency}
                         Set the tuning profile (default: None)
-
+  --force               Force encode even if video is already in h.265 format
+  --halt-on-increase    Stop processing if any video's size increases after optimization
 ```

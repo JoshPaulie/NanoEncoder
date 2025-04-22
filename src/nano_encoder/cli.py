@@ -36,6 +36,7 @@ class OptimizeArgs:
         ]
     ] = None
     force_encode: bool = False
+    halt_on_increase: bool = False
 
 
 @dataclass
@@ -166,6 +167,12 @@ optimize_parser.add_argument(
     action="store_true",
     dest="force_encode",
     help="Force encode even if video is already in h.265 format",
+)
+
+optimize_parser.add_argument(
+    "--halt-on-increase",
+    action="store_true",
+    help="Stop processing if any video's size increases after optimization",
 )
 
 # --- Purge command ---
