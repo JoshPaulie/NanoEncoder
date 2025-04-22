@@ -7,7 +7,7 @@ CRF (Constant Rate Factor) is the primary quality/size control setting for h.265
 
 **CRF is not the same as bitrate**. It adapts per scene, saving space in simpler frames while preserving detail in complex ones.
 
-NanoEncoder defaults to **28 CRF**, the same default as FFmpeg. I personally use 23. Of course, that means I'm fine with slightly larger files.
+NanoEncoder defaults to **28 CRF**, the same default as FFmpeg. I personally use 23. Of course, that means I'm fine with slightly larger files. If you want to keep as much data as possible, try 17-18 CRF. (Read more about pseudo-lossless [here](FAQ.md#lossless-flag))
 
 {: .warning }
 Again, too low of CRF may actually INCREASE the size of your file!
