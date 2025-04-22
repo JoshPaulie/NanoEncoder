@@ -37,7 +37,7 @@ FFmpeg offers presets to further control how much size is saved, but this time i
 Available presets: `ultrafast`, `superfast`, `veryfast`, `faster`, `fast`, `medium`, `slow`, `slower`, and `veryslow`.
 
 ### `--tune` flag (default: None)
-Finally, for even further control, one can specify a tuning profile. Check out the official documentation for more info, but the most commonly used tuning profiles are also the most self evident, `grain` and `animation`.
+Finally, for even further control, one can specify a tuning profile. Check out the official [documentation](https://x265.readthedocs.io/en/stable/presets.html) for more info, but the most commonly used tuning profiles are also the most self evident, `grain` and `animation`.
 
 Available tuning profiles: `animation`, `grain`, `stillimage`, `fastdecode`, and `zerolatency`.
 
