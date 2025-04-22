@@ -55,6 +55,7 @@ class OptimizeDirectory(BaseCommand):
         self.crf = args.crf
         self.preset = args.preset
         self.downscale = args.downscale
+        self.tune = args.tune
         self.total_disk_space_change = 0
         self.processing_duration = 0
         self.video_files = self._find_video_files()
@@ -159,7 +160,7 @@ class OptimizeDirectory(BaseCommand):
     def _get_eta(videos_remaining: int, average_video_length: float, speed: float) -> str:
         """Calculate estimated time remaining."""
         time_left = videos_remaining * average_video_length
-        time_remaining = time_left / speed
+        time_remaining = time_left / (speed or 1)
         return humanize_duration(time_remaining)
 
 
@@ -171,6 +172,7 @@ class VideoOptimizer:
         self.crf = optimize_dir.crf
         self.downscale = optimize_dir.downscale
         self.preset = optimize_dir.preset
+        self.tune = optimize_dir.tune
         self.output_file = self._create_optimizing_output_path()
         self._cleanup_existing_optimizing_file()
         self.original_size = self.input_file.stat().st_size
@@ -203,6 +205,7 @@ class VideoOptimizer:
             *["-c:v", "libx265"],  # HEVC (aka) h.265
             *["-crf", str(self.crf)],  # Constant refresh rate
             *["-preset", self.preset],  # Compression/efficiency presets
+            *(["-tune", self.tune] if self.tune else []),  # Tune flag (or not)
             *["-threads", "0"],  # Use all available threads
             *["-c:a", "copy"],  # Copy audio "as is"
             *["-c:s", "copy"],  # Copy subtitles "as is"

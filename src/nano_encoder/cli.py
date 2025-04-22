@@ -1,7 +1,7 @@
 import argparse
 from dataclasses import dataclass, fields, is_dataclass
 from pathlib import Path
-from typing import Literal, Type, TypeVar
+from typing import Literal, Optional, Type, TypeVar
 
 from nano_encoder import __version__
 
@@ -14,7 +14,6 @@ CRF_MAX: int = 51
 class OptimizeArgs:
     directory: Path
     crf: int = 28
-    downscale: int | None = None
     preset: Literal[
         "ultrafast",
         "superfast",
@@ -26,6 +25,16 @@ class OptimizeArgs:
         "slower",
         "veryslow",
     ] = "medium"
+    downscale: Optional[int] = None
+    tune: Optional[
+        Literal[
+            "animation",
+            "grain",
+            "stillimage",
+            "fastdecode",
+            "zerolatency",
+        ]
+    ] = None
 
 
 @dataclass
@@ -110,13 +119,13 @@ optimize_parser.add_argument(
     "--crf",
     type=valid_crf_range,
     default=28,
-    help=f"Constant rate factor ({CRF_MIN}-{CRF_MAX}, default: %(default)s)",
+    help=f"Constant rate factor, between {CRF_MIN}-{CRF_MAX} (default %(default)s))",
 )
 
 optimize_parser.add_argument(
     "--downscale",
     type=int,
-    help="Downscale video resolution to a specified height (e.g., 1080 or 720). Maintains aspect ratio.",
+    help="Downscale video resolution to a specified height (e.g., 1080 or 720). Maintains aspect ratio (default %(default)s)",
 )
 
 optimize_parser.add_argument(
@@ -135,6 +144,19 @@ optimize_parser.add_argument(
     ],
     default="medium",
     help="Set the encoding speed/efficiency preset (default: %(default)s)",
+)
+
+optimize_parser.add_argument(
+    "--tune",
+    type=str,
+    choices=[
+        "animation",
+        "grain",
+        "stillimage",
+        "fastdecode",
+        "zerolatency",
+    ],
+    help="Set the tuning profile (default: %(default)s)",
 )
 
 # --- Purge command ---
