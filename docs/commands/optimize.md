@@ -29,7 +29,7 @@ Use the crf to adjust the tradeoff between detail preservation and file size. It
 {: .warning }
 Too low of CRF (<18) may actually INCREASE the size of your file! NanoEncoder will warn you of file increases.
 
-Read the more at the [about-crf.md](/about-crf.md) page
+Read the more at the [about-crf.md](../about-crf.md) page
 
 ### `--preset` flag (default: medium)
 FFmpeg offers presets to further control how much size is saved, but this time in relation to encoding times. NanoEncoder uses the same default FFmpeg does for this encoding type, **medium**. The [documentation](https://trac.ffmpeg.org/wiki/Encode/H.265#ConstantRateFactorCRF) says "use the slowest preset you have patience", as this will result in the smallest video sizes.
