@@ -27,11 +27,13 @@ Full help output:
 usage: NanoEncoder health [-h] [--sample-ratio SAMPLE_RATIO] [--all] directory
 
 positional arguments:
-  directory             Check a small sample of original and optimized files, comparing similarity
+  directory             Check a small sample of original and optimized files,
+                        comparing similarity
 
 options:
   -h, --help            show this help message and exit
   --sample-ratio SAMPLE_RATIO
                         Percentage of video to check (ignored if --all is set)
   --all                 Check all video pairs rather than a sample
+
 ```

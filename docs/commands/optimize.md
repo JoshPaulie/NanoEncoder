@@ -72,5 +72,7 @@ options:
   --tune {animation,grain,stillimage,fastdecode,zerolatency}
                         Set the tuning profile (default: None)
   --force               Force encode even if video is already in h.265 format
-  --halt-on-increase    Stop processing if any video's size increases after optimization
+  --halt-on-increase    Stop processing if any video's size increases after
+                        optimization
+
 ```
