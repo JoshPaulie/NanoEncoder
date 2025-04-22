@@ -127,5 +127,23 @@ def get_video_resolution(video: Path) -> str:
     return result.stdout.strip()
 
 
+def get_video_codec(video: Path) -> str:
+    """Get video codec using ffprobe."""
+    result = subprocess.run(
+        [
+            "ffprobe",
+            *["-i", str(video)],
+            *["-select_streams", "v:0"],
+            *["-show_entries", "stream=codec_name"],
+            *["-v", "quiet"],
+            *["-of", "csv=p=0"],
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return result.stdout.strip()
+
+
 def shorten_path(file_path: Path, length: int):
     return Path(*Path(file_path).parts[-length:])

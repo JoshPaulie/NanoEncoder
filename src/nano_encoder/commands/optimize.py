@@ -16,6 +16,7 @@ from ..console import console
 from ..logger import DEBUG_LOG_FILE, logger
 from ..utils import (
     VIDEO_FILE_EXTENSIONS,
+    get_video_codec,
     get_video_duration,
     has_optimized_version,
     humanize_duration,
@@ -56,8 +57,10 @@ class OptimizeDirectory(BaseCommand):
         self.preset = args.preset
         self.downscale = args.downscale
         self.tune = args.tune
+        self.force_encode = args.force_encode
         self.total_disk_space_change = 0
         self.processing_duration = 0
+        self.skipped_hevc = []
         self.video_files = self._find_video_files()
 
     def execute(self) -> None:
@@ -119,6 +122,20 @@ class OptimizeDirectory(BaseCommand):
             return True
         return False
 
+    def _is_hevc_video(self, video: Path) -> bool:
+        """Check if video is already encoded with HEVC/h.265."""
+        # (Possibly incorrectly) report video is not HEVC
+        # This way, those already in HEVC will still be optimized with the `--force` flag.
+        if self.force_encode:
+            return False
+
+        video_codec = get_video_codec(video)
+        is_hevc = any(codec in video_codec.lower() for codec in ["hevc", "h265", "h.265"])
+        if is_hevc:
+            self.skipped_hevc.append(video.name)
+            logger.info(f"'{video.name}' is already h.265 encoded. Skipping.")
+        return is_hevc
+
     def _find_video_files(self) -> list[Path]:
         """Scan the directory for non-optimized video files."""
         console.print("Scanning directory for video files..", end="")
@@ -132,7 +149,12 @@ class OptimizeDirectory(BaseCommand):
             for video in video_files
             if all(exclude not in video.name for exclude in ["optimized", "optimizing"])
             and not self._video_already_optimized(video)
+            and not self._is_hevc_video(video)
         ]
+
+        if self.skipped_hevc:
+            console.print(f"\nSkipped [blue]{len(self.skipped_hevc)}[/] video(s) already in h.265 format.")
+            console.print("Use --force to encode them anyway.")
 
         plural = "s" if len(video_files) != 1 else ""
         console.print(f"found [blue]{len(video_files)}[/] original video{plural}.")

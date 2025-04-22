@@ -35,6 +35,7 @@ class OptimizeArgs:
             "zerolatency",
         ]
     ] = None
+    force_encode: bool = False
 
 
 @dataclass
@@ -157,6 +158,13 @@ optimize_parser.add_argument(
         "zerolatency",
     ],
     help="Set the tuning profile (default: %(default)s)",
+)
+
+optimize_parser.add_argument(
+    "--force",
+    action="store_true",
+    dest="force_encode",
+    help="Force encode even if video is already in h.265 format",
 )
 
 # --- Purge command ---
