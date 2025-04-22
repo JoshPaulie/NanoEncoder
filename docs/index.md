@@ -12,3 +12,4 @@ Here we'll detail the usage and behavior of NanoEncoder, as well as explain a bi
 - [Untag](commands/untag.md)
 
 ## About FFmpeg
+- [About CRF](about-crf.md)

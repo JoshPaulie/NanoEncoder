@@ -6,7 +6,7 @@
 A lightweight ffmpeg wrapper to reduce your video collection size (while preserving quality)
 
 > [!warning]
-> Core functionality works, customization features and logging changes underway. Project in "Beta", feedback on small sample sizes welcome. Refrain from running on large portions of your media until full first release (with PyPI release) 😄
+>  Project in "Beta", feedback on small sample sizes welcome. Refrain from running on large portions of your media until full first release (on PyPI) 😄
 
 **NanoEncoder** is for local media nerds who want to save storage space without sacrificing video quality. It provides:
 
@@ -26,24 +26,11 @@ A lightweight ffmpeg wrapper to reduce your video collection size (while preserv
 > Check it out [here](https://docs.astral.sh/uv/getting-started/installation/). This is the preferred method for my friends wanting to use the NanoEncoder
 
 ```bash
-# Install latest version
+# PyPI package coming soon™
 uv tool install git+https://github.com/JoshPaulie/NanoEncoder.git
-
-# Update installation to latest
-uv tool upgrade nanoencoder
-
-# Uninstall NanoEncoder
-uv tool uninstall nanoencoder
-
-# Verify functionality
-nen -h
 ```
 
-### pipx
-```bash
-pipx install git+https://github.com/JoshPaulie/NanoEncoder.git
-nen -h
-```
+Check out the [https://bexli.dev/NanoEncoder/installation](installation) page for more details.
 
 ## Usage
 ```bash
@@ -57,6 +44,7 @@ nen optimize --crf 23 '/media/series/Berserk (1997)' # Re-encode at specified CR
 
 ## Features
 - **Greatly reduce file sizes** for videos by re-encoding with h.265/HEVC
+- **Crossplatform**, tested on Windows, Linux, and MacOS
 - Perfectly handles **multiple subtitle and audio tracks**[^1] (GREAT for anime)
 - **CPU Multithreading** by default
 - **Smart batch processing** skips already processed videos and recovers incomplete files
@@ -66,17 +54,7 @@ nen optimize --crf 23 '/media/series/Berserk (1997)' # Re-encode at specified CR
 ### Safety Measures
 - No silent deletions: `purge` requires explicit user confirmation, and sends originals to system recycling bin
 - Crash detection: Handles partially optimized files
-- Comprehensive logging: All operations are recorded in `~/NanoEncoder.log`, and FFmpeg logs  arerecorded in `~/NanoEncoder_ffmpeg.log`
-
-## Quality of optimized videos
-Video quality will remain perceptively the same, but you should sample h.265 on a small portion of (similar) media before wasting time processing a large amount of files with bad settings.
-
-## ffmpeg settings
-The following command is what is ran against all found video files (by default)
-
-```bash
-ffmpeg -i input.mp4 -c:v libx265 -crf 28 -preset fast -threads 0 -c:a copy -c:s copy -tag:v hvc1 -loglevel error output.mp4
-```
+- Comprehensive logging: All operations are recorded in `~/NanoEncoder.log`, and FFmpeg logs are recorded in `~/NanoEncoder_ffmpeg.log`
 
 ## Contributing
 1. File an issue (optional)
@@ -88,8 +66,7 @@ ffmpeg -i input.mp4 -c:v libx265 -crf 28 -preset fast -threads 0 -c:a copy -c:s 
 
 ### Requirements
 - [uv](https://github.com/astral-sh/uv) 
-- [ruff](https://github.com/astral-sh/ruff)
-  - 110 line length
+- [ruff](https://github.com/astral-sh/ruff) (110 line length)
 
 ---
 
