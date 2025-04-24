@@ -64,7 +64,8 @@ def main() -> None:
                 untag_args = dataclass_from_namespace(UntagArgs, args)
                 handle_untag_command(untag_args)
     except Exception as e:
-        traceback.print_exc()
+        if args.dev:
+            traceback.print_exc()
         parser.exit(1, str(e) + "\n")
 
 
