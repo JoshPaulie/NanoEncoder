@@ -14,6 +14,13 @@ The `purge` command helps you clean up your original video files after you've co
 
 It's important you manually check at least a few of your videos before purging. You could also run the [health](health.md) command to semi-validate your optimized files before purging the originals.
 
+## Usage
+```sh
+nen purge "/media/series/Mob Psycho" # Move originals to recycling bin
+nen purge --permanent "/media/series/Mob Psycho" # Delete originals permanently
+nen purge --skip-confirmation "/media/series/Mob Psycho" # Skip confirmation step
+```
+
 ### `--permanent`, `--perm`, `-p` flag (default: False)
 Instead of moving files to the trash, permanently delete them. This is useful for saving space on systems where the trash is on the same drive.
 

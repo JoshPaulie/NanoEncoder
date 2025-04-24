@@ -17,11 +17,31 @@ After a directory is fully processed, you may run the [health](health.md) comman
 ## Usage
 One should experiment with a small sample of videos (like if you're optimizing a season of a show), at varying crf values, and visually comparing the results. A feature will be released soon™ to aid with process.
 
+```sh
+# Re-encode with default settings (crf: 28, preset: medium, tune: None)
+nen optimize "/media/series/Mob Psycho"
+
+# Re-encode with default settings, but stop if any file size increases
+nen optimize --half-on-increase "/media/series/Mob Psycho"
+
+# Re-encode with default settings, but downscale the resolution to 720p
+nen optimize --downscale 720 "/media/series/Mob Psycho"
+
+# Re-encode at CRF 18, "virtually lossless"
+nen optimize --crf 18 "/media/series/Mob Psycho"
+
+# Re-encode with "ultrafast" preset AND "animation" tuning profile
+nen optimize --preset ultrafast --tune animation "/media/series/Mob Psycho"
+
+# Force re-encode, regardless if video is already in h.265 or not.
+nen optimize --preset ultrafast --tune animation "/media/series/Mob Psycho"
+```
+
 ### For shows
 If you're re-encoding a show, you should test your CRF setting on a small sample of videos for each season. If your show spans a decade, the same settings may offer varying results.
 
 ### For movies
-If you're re-encoding, say, a movie, encoding a sample isn't possible. Or is it? One can encode a portion, cancel the operation with Ctrl+C, then review what has been re-encoded. This is very limited, and not very practical, but it's my best solution for now. Another feature for down the road. By and large, the default setting should be sufficient for most media.
+Sampling a portion of a movie isn't practical. For movies, use 17-18 CRF, which is considered "[visually lossless](../FAQ.md#lossless-flag)." 
 
 ### `--crf` flag (default: 28)
 Use the crf to adjust the tradeoff between detail preservation and file size. It can be anywhere from 0-51. The "best" value is subjective and varies between files.
@@ -37,7 +57,7 @@ FFmpeg offers presets to further control how much size is saved, but this time i
 Available presets: `ultrafast`, `superfast`, `veryfast`, `faster`, `fast`, `medium`, `slow`, `slower`, and `veryslow`.
 
 ### `--tune` flag (default: None)
-Finally, for even further control, one can specify a tuning profile. Check out the official [documentation](https://x265.readthedocs.io/en/stable/presets.html) for more info, but the most commonly used tuning profiles are also the most self evident, `grain` and `animation`.
+Finally, for even further control, one can specify a tuning profile. Check out the official [documentation](https://x265.readthedocs.io/en/stable/presets.html) for more info, but the most commonly used tuning profiles are also the most self evident, `grain` and `animation`. `grain` is for older movies which tend to be grainer. `animation` is for cartoons, anime.
 
 Available tuning profiles: `animation`, `grain`, `stillimage`, `fastdecode`, and `zerolatency`.
 

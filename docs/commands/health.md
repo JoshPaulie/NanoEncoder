@@ -15,6 +15,18 @@ The `health` command is used to validate the quality of your optimized videos by
 {: .important }
 SSIM is the "best" comparison tool built into FFmpeg, but is very mathematically objective. The "best" tool (in terms of human perception) would be [Netflix's vmaf](https://github.com/Netflix/vmaf), which would require users installing on their machines. Perhaps in a future update.
 
+## Usage
+```bash
+# Perform health check with default settings (5% sample size)
+nen health "/media/series/Mob Psycho"
+
+# Perform health check with custom sample ratio (The following would check 50% of available videos)
+nen health --sample-ratio 0.5 "/media/series/Mob Psycho"
+
+# Perform health check against ALL available videos
+nen health --all "/media/series/Mob Psycho"
+```
+
 ### `--sample-ratio` flag (default: 0.05)
 Controls what percentage of video pairs to check. The default of 0.05 means 5% of videos will be checked. At least one video will always be checked, even if the ratio would select less than one video.
 

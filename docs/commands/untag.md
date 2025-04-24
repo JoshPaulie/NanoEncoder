@@ -10,6 +10,12 @@ The `untag` command removes the ".optimized" suffix from your optimized video fi
 {: .note }
 This operation would be tedious to undo. The files themselves are unchanged, only their names are modified. Reveresing would simply be a matter of renaming the files, adding them back in.
 
+## Usage
+```bash
+# Safely removes the ".optimized" tag from file names
+nen untag "/media/series/Mob Psycho"
+```
+
 ---
 Full help output:
 ```
