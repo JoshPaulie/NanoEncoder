@@ -230,6 +230,11 @@ class VideoOptimizer:
 
     def _run_ffmpeg(self) -> None:
         """Execute ffmpeg command with configured parameters."""
+        # Build video filters
+        video_filters = ["format=yuv420p"]  # QuickTime compatibility
+        if self.downscale:
+            video_filters.append(f"scale=-2:{self.downscale}")
+
         command = [
             "ffmpeg",  # GOAT
             *["-i", str(self.input_file)],  # Input file
@@ -240,9 +245,8 @@ class VideoOptimizer:
             *["-threads", "0"],  # Use all available threads
             *["-c:a", "copy"],  # Copy audio "as is"
             *["-c:s", "copy"],  # Copy subtitles "as is"
-            *(["-vf", f"scale=-2:{self.downscale}"] if self.downscale else []),  # Downscale flag (or not)
             *["-tag:v", "hvc1"],  # Apple compatibility
-            *["-vf", "format=yuv420p"],  # QuickTime compatibility
+            *["-vf", ",".join(video_filters)],  # Combined video filters
             *["-loglevel", "error"],  # Only log errors
             str(self.output_file),
         ]
