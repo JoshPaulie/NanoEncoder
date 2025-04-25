@@ -5,8 +5,26 @@ Well, more anticipated questions.
 {:toc}
 
 ### Why use a wrapper?
-Here's how NanoEncoder simplifies FFmpeg usage:
+I think the best way to illustrate why a wrapper would be best (for some) is to compare the same functionality from both NanoEncoder and vanilla FFmpeg + shell.
 
+```bash
+# NanoEncoder
+nen optimize --downscale 720 --crf 28 "/media/movies/Star Wars"
+
+# Shell
+find "/media/movies/Star Wars" -type f \( -name "*.mp4" -o -name "*.mkv" -o -name "*.avi" \) | while read -r video; do
+    output="${video%.*}.optimized.${video##*.}"
+    ffmpeg -i "$video" \
+        -c:v libx265 -crf 28 -preset medium \
+        -vf "scale=-2:720,format=yuv420p" \
+        -threads 0 -tag:v hvc1 \
+        -c:a copy -c:s copy \
+        -loglevel error \
+        "$output"
+done
+```
+
+#### Basically, NanoEncoder handles the following for you
 - **Batch Processing**: No need to write loops or scripts to handle multiple files
 - **Crash Recovery**: Automatically detects and recovers from crashes/interruptions
 - **Quality Control**: Built-in SSIM analysis to validate your encoding settings
