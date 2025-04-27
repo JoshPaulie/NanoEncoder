@@ -2,7 +2,7 @@ import math
 import subprocess
 from pathlib import Path
 
-from .exceptions import EmptyDirectory
+from .exceptions import EmptyDirectoryError
 
 # --- Constants ---
 VIDEO_FILE_EXTENSIONS: list[str] = ["mov", "mkv", "mp4"]
@@ -47,7 +47,7 @@ def validate_directory(path: Path) -> None:
     if not path.is_dir():
         raise NotADirectoryError(f"{path} is not a directory")
     if not any(path.iterdir()):
-        raise EmptyDirectory(f"{path} is an empty directory")
+        raise EmptyDirectoryError(f"{path} is an empty directory")
 
 
 def has_optimized_version(file_path: Path) -> None | Path:

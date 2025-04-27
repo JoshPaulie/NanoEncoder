@@ -11,10 +11,10 @@ from rich.progress import (
     TimeElapsedColumn,
 )
 
-from ..cli import OptimizeArgs
-from ..console import console
-from ..logger import DEBUG_LOG_FILE, logger
-from ..utils import (
+from nano_encoder.cli import OptimizeArgs
+from nano_encoder.console import console
+from nano_encoder.logger import DEBUG_LOG_FILE, logger
+from nano_encoder.utils import (
     VIDEO_FILE_EXTENSIONS,
     get_video_codec,
     get_video_duration,
@@ -23,10 +23,12 @@ from ..utils import (
     humanize_file_size,
     shorten_path,
 )
+
 from .base_command import BaseCommand
 
 
 def handle_optimize_command(args: OptimizeArgs) -> None:
+    """Handle optimize command and errors."""
     try:
         OptimizeDirectory(args).execute()
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
@@ -34,7 +36,7 @@ def handle_optimize_command(args: OptimizeArgs) -> None:
         raise
     except KeyboardInterrupt:
         message = "User cancelled optimizing directory operation."
-        print(message, end="\n\n")
+        console.print(message, end="\n\n")
         logger.info(message)
 
 
@@ -99,7 +101,7 @@ class OptimizeDirectory(BaseCommand):
                     self.total_disk_space_change += optimizer.disk_space_change
 
                 except (subprocess.CalledProcessError, FileNotFoundError) as e:
-                    logger.error(f"Failed to process '{video}': {str(e)}")
+                    logger.error(f"Failed to process '{video}': {e!s}")
 
                 progress.update(current_video_progress_id, total=1, completed=1)
                 progress.update(current_video_progress_id, description=f"[green]{video.name}")
@@ -119,7 +121,7 @@ class OptimizeDirectory(BaseCommand):
             f"Completed optimizing '{self.directory}'. "
             f"Total duration: {humanize_duration(self.processing_duration)}. "
             f"Total disk space: {humanize_file_size(abs(self.total_disk_space_change))} "
-            f"{'saved' if self.total_disk_space_change > 0 else 'increased'}."
+            f"{'saved' if self.total_disk_space_change > 0 else 'increased'}.",
         )
 
         self._all_done_message()
@@ -255,7 +257,7 @@ class VideoOptimizer:
 
         start_time = time.perf_counter()
 
-        with open(DEBUG_LOG_FILE, "a") as log_file:
+        with DEBUG_LOG_FILE.open("a") as log_file:
             subprocess.run(command, stdout=log_file, stderr=log_file, text=True, check=True)
 
         self.encoding_duration = time.perf_counter() - start_time
@@ -264,13 +266,14 @@ class VideoOptimizer:
         """Validate encoding results and calculate savings."""
         if not self.output_file.exists():
             logger.error("Optimized file not created.")
-            raise FileNotFoundError("Optimized file not created.")
+            msg = "Optimized file not created."
+            raise FileNotFoundError(msg)
 
         self.post_optimization_size = self.output_file.stat().st_size
         self.disk_space_change = self.original_size - self.post_optimization_size
 
     def _rename_final_output(self) -> None:
-        """Finalize file name by changing .optimizing.ext → .optimized.ext"""
+        """Finalize file name by changing .optimizing.ext → .optimized.ext."""
         final_name = self.output_file.with_name(self.output_file.name.replace("optimizing", "optimized"))
         self.output_file.rename(final_name)
         self.output_file = final_name

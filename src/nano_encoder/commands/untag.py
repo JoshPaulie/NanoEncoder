@@ -2,14 +2,16 @@ from pathlib import Path
 
 from rich.table import Table
 
-from ..cli import UntagArgs
-from ..console import console
-from ..logger import logger
-from ..utils import find_all_video_files
+from nano_encoder.cli import UntagArgs
+from nano_encoder.console import console
+from nano_encoder.logger import logger
+from nano_encoder.utils import find_all_video_files
+
 from .base_command import BaseCommand
 
 
 def handle_untag_command(args: UntagArgs) -> None:
+    """Handle untag command and errors."""
     try:
         UntagDirectory(args).execute()
     except (FileNotFoundError, NotADirectoryError, ValueError, UntaggedVideoOverwriteError) as e:
@@ -33,12 +35,15 @@ class UntaggedVideoOverwriteError(Exception):
 
 
 class UntagDirectory(BaseCommand):
+    """Encapsulates untag command functionally."""
+
     def __init__(self, args: UntagArgs) -> None:
         super().__init__(args.directory)
         self.args = args
         self.videos = find_all_video_files(self.directory, optimized_only=True)
         if not self.videos:
-            raise ValueError(f"There are no videos to untag in '{self.directory.name}'.")
+            msg = f"There are no videos to untag in '{self.directory.name}'."
+            raise ValueError(msg)
 
     def execute(self) -> None:
         """Execute the untag operation."""

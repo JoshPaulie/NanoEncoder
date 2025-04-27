@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from ..console import console
-from ..logger import logger
-from ..utils import validate_directory
+from nano_encoder.console import console
+from nano_encoder.logger import logger
+from nano_encoder.utils import validate_directory
 
 
 class BaseCommand(ABC):
@@ -20,7 +20,8 @@ class BaseCommand(ABC):
             validate_directory(self.directory)
         except (FileNotFoundError, NotADirectoryError) as e:
             logger.error(str(e))
-            raise ValueError(f"Invalid directory: {self.directory}") from e
+            msg = f"Invalid directory: {self.directory}"
+            raise ValueError(msg) from e
 
     def _confirm_action(self, message: str, warning: str | None = None) -> bool:
         """Prompt user for confirmation with optional warning message."""
@@ -36,4 +37,3 @@ class BaseCommand(ABC):
     @abstractmethod
     def execute(self) -> None:
         """Execute the command. Must be implemented by subclasses."""
-        pass

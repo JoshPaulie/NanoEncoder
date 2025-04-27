@@ -1,7 +1,7 @@
 import argparse
 from dataclasses import dataclass, fields, is_dataclass
 from pathlib import Path
-from typing import Literal, Optional, Type, TypeVar
+from typing import Literal, TypeVar
 
 from nano_encoder import __version__
 
@@ -12,6 +12,8 @@ CRF_MAX: int = 51
 # --- Namespaces ---
 @dataclass
 class OptimizeArgs:
+    """Optimize command args."""
+
     directory: Path
     crf: int = 28
     preset: Literal[
@@ -25,22 +27,16 @@ class OptimizeArgs:
         "slower",
         "veryslow",
     ] = "medium"
-    downscale: Optional[int] = None
-    tune: Optional[
-        Literal[
-            "animation",
-            "grain",
-            "stillimage",
-            "fastdecode",
-            "zerolatency",
-        ]
-    ] = None
+    downscale: int | None = None
+    tune: Literal["animation", "grain", "stillimage", "fastdecode", "zerolatency"] | None = None
     force_encode: bool = False
     halt_on_increase: bool = False
 
 
 @dataclass
 class PurgeArgs:
+    """Purge command args."""
+
     directory: Path
     permanent: bool = False
     skip_confirmation: bool = False
@@ -48,6 +44,8 @@ class PurgeArgs:
 
 @dataclass
 class HealthArgs:
+    """Health command args."""
+
     directory: Path
     sample_ratio: float = 0.05
     all: bool = False
@@ -55,40 +53,38 @@ class HealthArgs:
 
 @dataclass
 class UntagArgs:
+    """Untag command args."""
+
     directory: Path
 
 
 ArgsDataclassType = TypeVar("ArgsDataclassType")
 
 
-def dataclass_from_namespace(
-    cls: Type[ArgsDataclassType], namespace: argparse.Namespace
-) -> ArgsDataclassType:
+def dataclass_from_namespace(cls: type[ArgsDataclassType], namespace: argparse.Namespace) -> ArgsDataclassType:
     """
-    Takes a namespace from argparse and maps it to its respective dataclass
+    Take a namespace from argparse and maps it to its respective dataclass.
 
     Mostly experimenting with modern Python and getting auto-complete out of the namespaces (which
     is pretty simple with no subparsers)
     """
     namespace_dict = vars(namespace)
     if not is_dataclass(cls):
-        raise TypeError(f"{cls} must be a dataclass type.")
-    return cls(
-        **{
-            field.name: namespace_dict.get(field.name)
-            for field in fields(cls)
-            if field.name in namespace_dict
-        }
-    )
+        msg = f"{cls} must be a dataclass type."
+        raise TypeError(msg)
+    return cls(**{field.name: namespace_dict.get(field.name) for field in fields(cls) if field.name in namespace_dict})
 
 
 # --- Input validators ---
 def valid_crf_range(value: str) -> int:
+    """Validate crf argument in optimize command, ensure crf is within bounds."""
     if not value.isdigit():
-        raise TypeError(f"{value} must be a str which is a digit.")
+        msg = f"{value} must be a str which is a digit."
+        raise TypeError(msg)
     int_value = int(value)
     if not CRF_MIN <= int_value <= CRF_MAX:
-        raise argparse.ArgumentTypeError(f"CRF must be between {CRF_MIN} and {CRF_MAX}")
+        msg = f"CRF must be between {CRF_MIN} and {CRF_MAX}"
+        raise argparse.ArgumentTypeError(msg)
     return int_value
 
 
@@ -128,7 +124,8 @@ optimize_parser.add_argument(
 optimize_parser.add_argument(
     "--downscale",
     type=int,
-    help="Downscale video resolution to a specified height (e.g., 1080 or 720). Maintains aspect ratio (default %(default)s)",
+    help="Downscale video resolution to a specified height (e.g., 1080 or 720). \
+        Maintains aspect ratio (default %(default)s)",
 )
 
 optimize_parser.add_argument(
@@ -177,7 +174,8 @@ optimize_parser.add_argument(
 
 # --- Purge command ---
 purge_parser = subparsers.add_parser(
-    "purge", help="Purge (delete) original video files which have accompanying optimized version"
+    "purge",
+    help="Purge (delete) original video files which have accompanying optimized version",
 )
 
 purge_parser.add_argument("directory", type=Path, help="Path to the target directory")
@@ -200,9 +198,7 @@ purge_parser.add_argument(
 )
 
 # --- Health command ---
-health_check_parser = subparsers.add_parser(
-    "health", help="After encoding, check the quality of your optimized files"
-)
+health_check_parser = subparsers.add_parser("health", help="After encoding, check the quality of your optimized files")
 
 health_check_parser.add_argument(
     "directory",

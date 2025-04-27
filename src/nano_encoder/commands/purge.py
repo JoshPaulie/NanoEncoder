@@ -1,16 +1,17 @@
 from pathlib import Path
 
-from rich.progress import track
 from send2trash import send2trash
 
-from ..cli import PurgeArgs
-from ..console import console
-from ..logger import logger
-from ..utils import VIDEO_FILE_EXTENSIONS, find_all_video_files, has_optimized_version
+from nano_encoder.cli import PurgeArgs
+from nano_encoder.console import console
+from nano_encoder.logger import logger
+from nano_encoder.utils import VIDEO_FILE_EXTENSIONS, find_all_video_files, has_optimized_version
+
 from .base_command import BaseCommand
 
 
 def handle_purge_command(args: PurgeArgs) -> None:
+    """Handle purge command and errors."""
     try:
         PurgeDirectory(args).execute()
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
@@ -23,6 +24,8 @@ def handle_purge_command(args: PurgeArgs) -> None:
 
 
 class PurgeDirectory(BaseCommand):
+    """Encapsulates purge command functionally."""
+
     def __init__(self, args: PurgeArgs) -> None:
         super().__init__(args.directory)
         self.permanent = args.permanent
@@ -34,7 +37,7 @@ class PurgeDirectory(BaseCommand):
         if unfinished_video := self._has_unfinished_video():
             console.print(
                 f"Encountered unfinished video: '{unfinished_video}', unable to purge originals. "
-                "Remove this file, or re-run the encode command against the directory to resolve."
+                "Remove this file, or re-run the encode command against the directory to resolve.",
             )
             logger.error(f"Unfinished video: {unfinished_video.absolute()}")
             console.print(f"\n[green]Suggested fix[/]:\nnen optimize {self.directory.absolute()}")
@@ -65,11 +68,7 @@ class PurgeDirectory(BaseCommand):
         for ext in VIDEO_FILE_EXTENSIONS:
             candidates.extend(self.directory.rglob(f"*.{ext}"))
 
-        original_files = []
-        for file in track(candidates, "Finding pairs..", transient=True):
-            if "optimized" not in file.name and has_optimized_version(file):
-                original_files.append(file)
-        return original_files
+        return [file for file in candidates if "optimized" not in file.name and has_optimized_version(file)]
 
     def _has_unfinished_video(self) -> Path | None:
         """Check if there's any unfinished video in the directory."""

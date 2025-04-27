@@ -6,6 +6,8 @@ DEBUG_LOG_FILE: Path = Path.cwd() / "NanoEncoder_ffmpeg.log"
 
 
 class NanoEncoderLogger(logging.Logger):
+    """Custom logger."""
+
     def _stringify(self, msg: str | list[str]) -> str:
         if isinstance(msg, list):
             return " ".join(str(m) for m in msg)
@@ -29,7 +31,7 @@ class NanoEncoderLogger(logging.Logger):
 
 # Configure logging
 logging.setLoggerClass(NanoEncoderLogger)
-logger: NanoEncoderLogger = logging.getLogger("NanoEncoder")  # type: ignore
+logger: NanoEncoderLogger = logging.getLogger("NanoEncoder")
 logger.setLevel(logging.INFO)
 
 # File handler

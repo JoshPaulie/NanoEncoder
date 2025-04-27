@@ -25,9 +25,7 @@ def welcome_message() -> None:
 
 
 def ffmpeg_check() -> None:
-    """
-    Check if FFmpeg is installed
-    """
+    """Check if FFmpeg is installed."""
     required_apps = ["ffmpeg", "ffprobe"]
     for app in required_apps:
         if not shutil.which(app):
@@ -63,7 +61,7 @@ def main() -> None:
             case "untag":
                 untag_args = dataclass_from_namespace(UntagArgs, args)
                 handle_untag_command(untag_args)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 (todo)
         if args.dev:
             traceback.print_exc()
         parser.exit(1, str(e) + "\n")
@@ -73,4 +71,4 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print()
+        console.print()

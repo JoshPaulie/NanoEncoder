@@ -16,19 +16,16 @@ from rich.progress import (
 from rich.table import Table
 from rich.text import Text
 
-from ..cli import HealthArgs
-from ..console import console
-from ..logger import DEBUG_LOG_FILE, logger
-from ..utils import (
-    find_all_video_files,
-    get_video_resolution,
-    has_optimized_version,
-    humanize_file_size,
-)
+from nano_encoder.cli import HealthArgs
+from nano_encoder.console import console
+from nano_encoder.logger import DEBUG_LOG_FILE, logger
+from nano_encoder.utils import find_all_video_files, get_video_resolution, has_optimized_version, humanize_file_size
+
 from .base_command import BaseCommand
 
 
 def handle_health_command(args: HealthArgs) -> None:
+    """Handle health command and errors."""
     try:
         HealthChecker(args).execute()
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
@@ -41,6 +38,8 @@ def handle_health_command(args: HealthArgs) -> None:
 
 
 class HealthChecker(BaseCommand):
+    """Encapsulates health command functionally."""
+
     ProgressBar = Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -116,13 +115,15 @@ class HealthChecker(BaseCommand):
 
     def _pair_videos(self) -> list[tuple[Path, Path]]:
         """Create pairs of original and optimized videos."""
-        pairs: list[tuple[Path, Path]] = []
         original_files = find_all_video_files(self.directory, originals_only=True)
-        for original in original_files:
-            if optimized_video := has_optimized_version(original):
-                pairs.append((original, optimized_video))
+        pairs: list[tuple[Path, Path]] = [
+            (original, optimized_video)
+            for original in original_files
+            if (optimized_video := has_optimized_version(original))
+        ]
         if not pairs:
-            raise FileNotFoundError(f"'{self.directory}' directory doesn't have any pairs to compare.")
+            msg = f"'{self.directory}' directory doesn't have any pairs to compare."
+            raise FileNotFoundError(msg)
         return pairs
 
     def _get_sample(self) -> list[tuple[Path, Path]]:
@@ -163,24 +164,24 @@ class HealthChecker(BaseCommand):
                 check=True,
             )
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            logger.error(f"Failed to compare {original_file.name} & {optimized_file.name}: {str(e)}")
+            logger.error(f"Failed to compare {original_file.name} & {optimized_file.name}: {e!s}")
             raise
 
-        with open(DEBUG_LOG_FILE, "a") as log_file:
+        with DEBUG_LOG_FILE.open("a") as log_file:
             log_file.write(process.stderr)
 
         matches = re.findall(r"All:(\d+\.\d+)", process.stderr)
         if not matches:
-            raise ValueError("SSIM score not found in ffmpeg output")
+            msg = "SSIM score not found in ffmpeg output"
+            raise ValueError(msg)
         return float(matches[-1])
 
     @staticmethod
     def _ssim_health_color(score: float) -> str:
         """Grade SSIM score and return description and color."""
         score = round(score, 3)
-        if score >= 0.990:
+        if score >= 0.990:  # noqa: PLR2004
             return "green"
-        elif score >= 0.980:
+        if score >= 0.980:  # noqa: PLR2004
             return "yellow"
-        else:
-            return "red"
+        return "red"

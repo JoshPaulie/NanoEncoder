@@ -35,4 +35,9 @@ line-length = 120
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["D212", "D107"]
+ignore = ["D212", "D107", "D100", "S603", "S311"]
+
+fixable = ["ALL"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/nano_encoder/logger.py" = ["ANN002", "ANN003", "D102", "ANN201"]
