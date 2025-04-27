@@ -1,21 +1,27 @@
 # FAQ
-Well, more anticipated questions.
+Well, more like anticipated questions.
 
 - TOC
 {:toc}
 
-### Why use a wrapper?
+## What's the goal of this wrapper?
+1. Batch processing (with some fault tolerance), recursively finding all videos in a folders.
+2. Reduce the amount of flags and overall complexity that comes with FFmpeg for my less tech-literate friends
+
+You could very easily rewrite this as a bash loop, and that would work for most. But for those who simply want to mass re-encode into HEVC, here's a slightly simpler solution.
+
+## Why use a wrapper?
 I think the best way to illustrate why a wrapper would be best (for some) is to compare the same functionality from both NanoEncoder and vanilla FFmpeg + shell.
 
 ```bash
 # NanoEncoder
-nen optimize --downscale 720 --crf 28 "/media/movies/Star Wars"
+nen optimize --downscale 720 --crf 18 "/media/movies/Star Wars"
 
 # Shell
 find "/media/movies/Star Wars" -type f \( -name "*.mp4" -o -name "*.mkv" -o -name "*.avi" \) | while read -r video; do
     output="${video%.*}.optimized.${video##*.}"
     ffmpeg -i "$video" \
-        -c:v libx265 -crf 28 -preset medium \
+        -c:v libx265 -crf 18 -preset medium \
         -vf "scale=-2:720,format=yuv420p" \
         -threads 0 -tag:v hvc1 \
         -c:a copy -c:s copy \
@@ -24,47 +30,29 @@ find "/media/movies/Star Wars" -type f \( -name "*.mp4" -o -name "*.mkv" -o -nam
 done
 ```
 
-#### Basically, NanoEncoder handles the following for you
+### Basically, NanoEncoder handles the following for you
 - **Batch Processing**: No need to write loops or scripts to handle multiple files
 - **Crash Recovery**: Automatically detects and recovers from crashes/interruptions
 - **Quality Control**: Built-in SSIM analysis to validate your encoding settings
-- **Safer File Management**: 
-   - Moves originals to trash instead of permanent deletion
-   - Requires confirmation before deleting
-   - Won't delete originals until optimization is complete
-- **Progress Tracking**:
-   - [Rich](https://github.com/Textualize/rich/) progress bars
-   - Time remaining estimates
-   - Space savings reports
-- **Sane Defaults**:
-   - Uses recommended CRF values
-   - Enables multithreading
-   - Preserves subtitles and audio tracks
-- **Simple CLI**:
-   - No need to remember FFmpeg parameters
-   - Simplified, clear, documented options
-   - Help text explains each setting
-- **Compatibility**:
-   - Adds Apple/QuickTime compatibility flags
-   - Maintains directory hierarchy and file organization
-   - Preserves metadata
+- **Removal of old files**: After encoding, remove the originals
+- **Simplified CLI**: Set many defaults behind the scenes, thus fewer flags
+- **Compatibility support**: QuickTime and Mac compatibility by default
 
-FFmpeg is an incredibly powerful piece of software. The only intention of this project to make it more accessible for my friends, not try to shadow or downplay its significance. It's the heavylifter behind all of this.
+FFmpeg is an incredibly powerful piece of software. The only intention of this project to make it more accessible for my friends, not try to overshadow or downplay its role
 
-### Can you add X flag?
-Depends. The current flags satisfy the 3 arguments which the [wiki](https://trac.ffmpeg.org/wiki/Encode/H.264#crf) suggest users pick, CRF + Preset + Tuning profile.
+For much cooler and feature rich alternatives to NanoEncoder, check out [these projects](alternative-projects.md)
 
-### Lossless flag?
-I'm unlikely to add a lossless flag. From what I've only seen, file sizes grow when the lossless feature is applied. Maybe I'm misunderstanding something.
+## Can you add X flag?
+Depends. The current flags satisfy the 3 arguments which the [wiki](https://trac.ffmpeg.org/wiki/Encode/H.265#ConstantRateFactorCRF) suggest users pick, CRF + Preset + Tuning profile.
 
-FWIW, the wiki has the following to say:
-> Tip: If you're looking for an output that is roughly "visually lossless" but not technically lossless, use a -crf value of around 17 or 18 (you'll have to experiment to see which value is acceptable for you). It will likely be indistinguishable from the source and not result in a huge, possibly incompatible file like true lossless mode.
+### Can you add a lossless flag?
+Lossless files end up being significantly bigger file sizes, which is [antithetical](#whats-the-goal-of-this-wrapper) to the goal of the project.
 
-### Two pass flag?
-Maybe. Don't like the complexity it would in terms of CLI flags, 
+The [h.264 wiki](https://trac.ffmpeg.org/wiki/Encode/H.264#LosslessH.264) has the following to say:
+> If you're looking for an output that is roughly **"visually lossless"** but not technically lossless, use a -crf value of around 17 or 18 (you'll have to experiment to see which value is acceptable for you). It will likely be indistinguishable from the source and not result in a huge, possibly incompatible file like true lossless mode.
 
-### What's the goal of this wrapper?
-1. Batch processing (with some fault tolerance), recursively finding all videos in a folders.
-2. Reduce the amount of flags and overall complexity that comes with FFmpeg for my less tech-literate friends
+This [self proclaimed](https://www.reddit.com/r/handbrake/comments/1egvyzl/comment/lfvrmtg/) "pixel peeper" from reddit recommends:
+> CRF values also shift with presets.  But generally Slower CRF 17/18 or Very Slow 18/19 have been very close to visually lossless for me
 
-You could very easily rewrite this as a bash loop, and that would work for most. But for those who simply want to mass re-encode into HEVC, here's a slightly simpler solution.
+### Can you add a two-pass flag?
+Meh. Don't like the complexity it would in terms of CLI flags, and from what I understand, is strictly related to the output size, and not the quality of the re-encoding. For that reason, unlikely to.
