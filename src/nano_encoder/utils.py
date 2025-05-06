@@ -27,14 +27,16 @@ def humanize_file_size(size_bytes: int) -> str:
     Convert bytes to KB, MB, and GB.
     """
     if size_bytes < 0:
-        raise ValueError("File size cannot be negative")
+        msg = "File size cannot be negative"
+        raise ValueError(msg)
     size = float(size_bytes)
     units = ["bytes", "KB", "MB", "GB"]
+    bytes_in_kib = 1024
     for unit in units:
-        if size < 1024:
+        if size < bytes_in_kib:
             break
         if unit != units[-1]:
-            size /= 1024
+            size /= bytes_in_kib
     return f"{size:.2f} {unit}" if unit != "bytes" else f"{int(size)} {unit}"
 
 
@@ -43,11 +45,14 @@ def validate_directory(path: Path) -> None:
     User validation for passed directory
     """
     if not path.exists():
-        raise FileNotFoundError(f"Directory {path} does not exist")
+        msg = f"Directory {path} does not exist"
+        raise FileNotFoundError(msg)
     if not path.is_dir():
-        raise NotADirectoryError(f"{path} is not a directory")
+        msg = f"{path} is not a directory"
+        raise NotADirectoryError(msg)
     if not any(path.iterdir()):
-        raise EmptyDirectoryError(f"{path} is an empty directory")
+        msg = f"{path} is an empty directory"
+        raise EmptyDirectoryError(msg)
 
 
 def has_optimized_version(file_path: Path) -> None | Path:
@@ -62,12 +67,15 @@ def has_optimized_version(file_path: Path) -> None | Path:
 
 def find_all_video_files(
     directory: Path,
+    *,
     originals_only: bool = False,
     optimized_only: bool = False,
 ) -> list[Path]:
+    """Collect all files of given directory."""
     if all([optimized_only, originals_only]):
         # can't be both
-        raise Exception  # todo
+        msg = "Cannot specify both 'originals_only' and 'optimized_only'."
+        raise ValueError(msg)
 
     video_files: list[Path] = []
     for ext in VIDEO_FILE_EXTENSIONS:
@@ -84,12 +92,10 @@ def find_all_video_files(
     return video_files
 
 
-def directory_fully_processed(directory: Path):
+def directory_fully_processed(directory: Path) -> bool:
+    """Predicate for if directory is fully processed."""
     video_files = find_all_video_files(directory, originals_only=True)
-    for video in video_files:
-        if not has_optimized_version(video):
-            return False
-    return True
+    return all(has_optimized_version(video) for video in video_files)
 
 
 def get_video_duration(video: Path) -> float:
@@ -145,5 +151,6 @@ def get_video_codec(video: Path) -> str:
     return result.stdout.strip()
 
 
-def shorten_path(file_path: Path, length: int):
+def shorten_path(file_path: Path, length: int) -> Path:
+    """Truncate a given path."""
     return Path(*Path(file_path).parts[-length:])

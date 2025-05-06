@@ -19,6 +19,7 @@ from .logger import logger
 
 
 def welcome_message() -> None:
+    """Welcome message."""
     console.print()
     console.rule("Welcome to NanoEncoder!")
     console.print()
@@ -38,6 +39,7 @@ def ffmpeg_check() -> None:
 
 
 def main() -> None:
+    """Entrypoint to app."""
     parser = primary_parser
     args = parser.parse_args()
 

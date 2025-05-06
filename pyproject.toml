@@ -35,7 +35,20 @@ line-length = 120
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["D212", "D107", "D100", "S603", "S311"]
+ignore = [
+    "D212",
+    "D107",
+    "D100",
+    "S603",
+    "S311",
+    "T201",
+    "TD",
+    "S607",
+    "D200",
+    "D400",
+    "D415",
+    "D401",
+]
 
 fixable = ["ALL"]
 
