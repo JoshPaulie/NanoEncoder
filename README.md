@@ -30,7 +30,7 @@ A lightweight ffmpeg wrapper to reduce your video collection size (while preserv
 uv tool install git+https://github.com/JoshPaulie/NanoEncoder.git
 ```
 
-Check out the [https://bexli.dev/NanoEncoder/installation](installation) page for more details.
+Check out the [installation](https://bexli.dev/NanoEncoder/installation) page for more details.
 
 ## Usage
 ```bash
