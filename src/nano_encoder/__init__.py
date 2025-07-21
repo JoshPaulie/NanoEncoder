@@ -1,1 +1,3 @@
-__version__ = "0.2.0"
+"""Nano Encoder."""
+
+__version__ = "0.2.1"

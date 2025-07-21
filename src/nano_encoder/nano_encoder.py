@@ -2,14 +2,7 @@ import shutil
 import sys
 import traceback
 
-from .cli import (
-    HealthArgs,
-    OptimizeArgs,
-    PurgeArgs,
-    UntagArgs,
-    dataclass_from_namespace,
-    primary_parser,
-)
+from .cli import create_parser
 from .commands.healthcheck import handle_health_command
 from .commands.optimize import handle_optimize_command
 from .commands.purge import handle_purge_command
@@ -40,7 +33,7 @@ def ffmpeg_check() -> None:
 
 def main() -> None:
     """Entrypoint to app."""
-    parser = primary_parser
+    parser = create_parser()
     args = parser.parse_args()
 
     welcome_message()
@@ -49,24 +42,20 @@ def main() -> None:
     try:
         match args.command:
             case "optimize":
-                optimize_args = dataclass_from_namespace(OptimizeArgs, args)
-                handle_optimize_command(optimize_args)
-
+                handle_optimize_command(args)
             case "purge":
-                purge_args = dataclass_from_namespace(PurgeArgs, args)
-                handle_purge_command(purge_args)
-
+                handle_purge_command(args)
             case "health":
-                health_args = dataclass_from_namespace(HealthArgs, args)
-                handle_health_command(health_args)
-
+                handle_health_command(args)
             case "untag":
-                untag_args = dataclass_from_namespace(UntagArgs, args)
-                handle_untag_command(untag_args)
+                handle_untag_command(args)
     except Exception as e:  # noqa: BLE001 (todo)
         if args.dev:
             traceback.print_exc()
         parser.exit(1, str(e) + "\n")
+
+
+
 
 
 if __name__ == "__main__":

@@ -1,8 +1,9 @@
+import argparse
+from dataclasses import dataclass
 from pathlib import Path
 
 from send2trash import send2trash
 
-from nano_encoder.cli import PurgeArgs
 from nano_encoder.console import console
 from nano_encoder.logger import logger
 from nano_encoder.utils import VIDEO_FILE_EXTENSIONS, find_all_video_files, has_optimized_version
@@ -10,10 +11,23 @@ from nano_encoder.utils import VIDEO_FILE_EXTENSIONS, find_all_video_files, has_
 from .base_command import BaseCommand
 
 
-def handle_purge_command(args: PurgeArgs) -> None:
+@dataclass
+class PurgeArgs:
+    """Purge command args."""
+
+    directory: Path
+    permanent: bool = False
+    skip_confirmation: bool = False
+
+
+def handle_purge_command(args: argparse.Namespace) -> None:
     """Handle purge command and errors."""
     try:
-        PurgeDirectory(args).execute()
+        PurgeDirectory(PurgeArgs(
+            directory=args.directory,
+            permanent=args.permanent,
+            skip_confirmation=args.skip_confirmation,
+        )).execute()
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
         logger.error(str(e))
         raise
@@ -21,6 +35,7 @@ def handle_purge_command(args: PurgeArgs) -> None:
         message = "User cancelled purge operation."
         console.print(f"\n{message}\n")
         logger.info(message)
+
 
 
 class PurgeDirectory(BaseCommand):

@@ -1,7 +1,9 @@
+import argparse
 import math
 import random
 import re
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 
 from rich import box
@@ -16,7 +18,6 @@ from rich.progress import (
 from rich.table import Table
 from rich.text import Text
 
-from nano_encoder.cli import HealthArgs
 from nano_encoder.console import console
 from nano_encoder.logger import DEBUG_LOG_FILE, logger
 from nano_encoder.utils import find_all_video_files, get_video_resolution, has_optimized_version, humanize_file_size
@@ -24,10 +25,23 @@ from nano_encoder.utils import find_all_video_files, get_video_resolution, has_o
 from .base_command import BaseCommand
 
 
-def handle_health_command(args: HealthArgs) -> None:
+@dataclass
+class HealthArgs:
+    """Health command args."""
+
+    directory: Path
+    sample_ratio: float = 0.05
+    all: bool = False
+
+
+def handle_health_command(args: argparse.Namespace) -> None:
     """Handle health command and errors."""
     try:
-        HealthChecker(args).execute()
+        HealthChecker(HealthArgs(
+            directory=args.directory,
+            sample_ratio=args.sample_ratio,
+            all=args.all,
+        )).execute()
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
         logger.error(str(e))
         raise
@@ -35,6 +49,7 @@ def handle_health_command(args: HealthArgs) -> None:
         message = "User cancelled healthcheck operation."
         console.print(message, end="\n\n")
         logger.info(message)
+
 
 
 class HealthChecker(BaseCommand):

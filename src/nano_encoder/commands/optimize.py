@@ -1,6 +1,9 @@
+import argparse
 import subprocess
 import time
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 from rich.progress import (
     BarColumn,
@@ -11,7 +14,6 @@ from rich.progress import (
     TimeElapsedColumn,
 )
 
-from nano_encoder.cli import OptimizeArgs
 from nano_encoder.console import console
 from nano_encoder.logger import DEBUG_LOG_FILE, logger
 from nano_encoder.utils import (
@@ -27,10 +29,41 @@ from nano_encoder.utils import (
 from .base_command import BaseCommand
 
 
-def handle_optimize_command(args: OptimizeArgs) -> None:
+@dataclass
+class OptimizeArgs:
+    """Optimize command args."""
+
+    directory: Path
+    crf: int = 28
+    preset: Literal[
+        "ultrafast",
+        "superfast",
+        "veryfast",
+        "faster",
+        "fast",
+        "medium",
+        "slow",
+        "slower",
+        "veryslow",
+    ] = "medium"
+    downscale: int | None = None
+    tune: Literal["animation", "grain", "stillimage", "fastdecode", "zerolatency"] | None = None
+    force_encode: bool = False
+    halt_on_increase: bool = False
+
+
+def handle_optimize_command(args: argparse.Namespace) -> None:
     """Handle optimize command and errors."""
     try:
-        OptimizeDirectory(args).execute()
+        OptimizeDirectory(OptimizeArgs(
+            directory=args.directory,
+            crf=args.crf,
+            preset=args.preset,
+            downscale=args.downscale,
+            tune=args.tune,
+            force_encode=args.force_encode,
+            halt_on_increase=args.halt_on_increase,
+        )).execute()
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
         logger.error(str(e))
         raise
@@ -38,6 +71,7 @@ def handle_optimize_command(args: OptimizeArgs) -> None:
         message = "User cancelled optimizing directory operation."
         console.print(message, end="\n\n")
         logger.info(message)
+
 
 
 class OptimizeDirectory(BaseCommand):

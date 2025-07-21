@@ -1,8 +1,9 @@
+import argparse
+from dataclasses import dataclass
 from pathlib import Path
 
 from rich.table import Table
 
-from nano_encoder.cli import UntagArgs
 from nano_encoder.console import console
 from nano_encoder.logger import logger
 from nano_encoder.utils import find_all_video_files
@@ -10,10 +11,17 @@ from nano_encoder.utils import find_all_video_files
 from .base_command import BaseCommand
 
 
-def handle_untag_command(args: UntagArgs) -> None:
+@dataclass
+class UntagArgs:
+    """Untag command args."""
+
+    directory: Path
+
+
+def handle_untag_command(args: argparse.Namespace) -> None:
     """Handle untag command and errors."""
     try:
-        UntagDirectory(args).execute()
+        UntagDirectory(UntagArgs(directory=args.directory)).execute()
     except (FileNotFoundError, NotADirectoryError, ValueError, UntaggedVideoOverwriteError) as e:
         logger.error(str(e))
         raise
@@ -21,6 +29,7 @@ def handle_untag_command(args: UntagArgs) -> None:
         message = "User cancelled untag operation."
         console.print(f"\n{message}\n")
         logger.info(message)
+
 
 
 class UntaggedVideoOverwriteError(Exception):
