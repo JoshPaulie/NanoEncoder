@@ -79,7 +79,7 @@ class PurgeDirectory(BaseCommand):
     def _find_original_files_to_purge(self) -> list[Path]:
         """Scan directory for candidate original video files to purge."""
         console.print("Looking for original files with optimized files..")
-        candidates = []
+        candidates: list[Path] = []
         for ext in VIDEO_FILE_EXTENSIONS:
             candidates.extend(self.directory.rglob(f"*.{ext}"))
 

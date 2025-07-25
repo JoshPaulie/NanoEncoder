@@ -8,14 +8,14 @@ from typing import Literal
 from rich.progress import (
     BarColumn,
     Progress,
-    SpinnerColumn,
+    TaskID,
     TaskProgressColumn,
     TextColumn,
-    TimeElapsedColumn,
+    TimeRemainingColumn,
 )
 
 from nano_encoder.console import console
-from nano_encoder.logger import DEBUG_LOG_FILE, logger
+from nano_encoder.logger import logger
 from nano_encoder.utils import (
     VIDEO_FILE_EXTENSIONS,
     get_video_codec,
@@ -55,15 +55,17 @@ class OptimizeArgs:
 def handle_optimize_command(args: argparse.Namespace) -> None:
     """Handle optimize command and errors."""
     try:
-        OptimizeDirectory(OptimizeArgs(
-            directory=args.directory,
-            crf=args.crf,
-            preset=args.preset,
-            downscale=args.downscale,
-            tune=args.tune,
-            force_encode=args.force_encode,
-            halt_on_increase=args.halt_on_increase,
-        )).execute()
+        OptimizeDirectory(
+            OptimizeArgs(
+                directory=args.directory,
+                crf=args.crf,
+                preset=args.preset,
+                downscale=args.downscale,
+                tune=args.tune,
+                force_encode=args.force_encode,
+                halt_on_increase=args.halt_on_increase,
+            ),
+        ).execute()
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
         logger.error(str(e))
         raise
@@ -73,16 +75,14 @@ def handle_optimize_command(args: argparse.Namespace) -> None:
         logger.info(message)
 
 
-
 class OptimizeDirectory(BaseCommand):
     """Handles optimizing videos in a directory using VideoEncoder."""
 
     ProgressBar = Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description} {task.fields[eta]}"),
+        TextColumn("[progress.description]{task.description}"),
         BarColumn(),
         TaskProgressColumn(),
-        TimeElapsedColumn(),
+        TimeRemainingColumn(),
         expand=True,
         console=console,
     )
@@ -96,9 +96,10 @@ class OptimizeDirectory(BaseCommand):
         self.force_encode = args.force_encode
         self.halt_on_increase = args.halt_on_increase
         self.total_disk_space_change = 0
-        self.processing_duration = 0
-        self.skipped_hevc = []
-        self.video_files = self._find_video_files()
+        self.processing_duration = 0.0
+        self.skipped_hevc: list[str] = []
+        self.video_files: list[Path] = self._find_video_files()
+        self.completed_duration_of_previous_videos: float = 0.0
 
     def execute(self) -> None:
         """Process each video file in the directory."""
@@ -113,17 +114,26 @@ class OptimizeDirectory(BaseCommand):
         console.print()
 
         with self.ProgressBar as progress:
+            total_videos_duration = sum(get_video_duration(video) for video in self.video_files)
             overall_progress_id = progress.add_task(
                 f"Optimizing '{shorten_path(self.directory, 3)}'",
-                total=len(self.video_files),
-                eta="",
+                total=total_videos_duration,
             )
 
-            for indx, video in enumerate(self.video_files):
-                current_video_progress_id = progress.add_task(f"[yellow]{video.name}", total=None, eta="")
+            for video in self.video_files:
+                task_id = progress.add_task(
+                    f"[yellow]{video.name}",
+                    total=get_video_duration(video),
+                )
 
                 try:
-                    optimizer = VideoOptimizer(video, self)
+                    optimizer = VideoOptimizer(
+                        video,
+                        self,
+                        overall_progress_id,
+                        self.completed_duration_of_previous_videos,
+                    )
+                    optimizer.task_id = task_id
                     optimizer.optimize()
 
                     if self.halt_on_increase and optimizer.disk_space_change < 0:
@@ -137,17 +147,12 @@ class OptimizeDirectory(BaseCommand):
                 except (subprocess.CalledProcessError, FileNotFoundError) as e:
                     logger.error(f"Failed to process '{video}': {e!s}")
 
-                progress.update(current_video_progress_id, total=1, completed=1)
-                progress.update(current_video_progress_id, description=f"[green]{video.name}")
+                progress.update(task_id, completed=get_video_duration(video))
+                progress.update(task_id, description=f"[green]{video.name}")
 
-                videos_remaining = len(self.video_files) - (indx + 1)
-                progress.update(
-                    overall_progress_id,
-                    advance=1,
-                    eta=f"Eta: {self._get_eta(videos_remaining, self._average_video_length(), optimizer.speed_factor)}",
-                )
+                self.completed_duration_of_previous_videos += get_video_duration(video)
 
-            progress.update(overall_progress_id, description=f"[green]{self.directory.name}", eta="")
+            progress.update(overall_progress_id, description=f"[green]{self.directory.name}")
 
         self.processing_duration = time.perf_counter() - start_time
 
@@ -169,8 +174,7 @@ class OptimizeDirectory(BaseCommand):
 
     def _is_hevc_video(self, video: Path) -> bool:
         """Check if video is already encoded with HEVC/h.265."""
-        # (Possibly incorrectly) report video is not HEVC
-        # This way, those already in HEVC will still be optimized with the `--force` flag.
+        # If --force is used, treat all videos as non-HEVC to ensure they are processed.
         if self.force_encode:
             return False
 
@@ -185,7 +189,7 @@ class OptimizeDirectory(BaseCommand):
         """Scan the directory for non-optimized video files."""
         console.print("Scanning directory for video files..", end="")
 
-        video_files = []
+        video_files: list[Path] = []
         for ext in VIDEO_FILE_EXTENSIONS:
             video_files.extend(self.directory.rglob(f"*.{ext}"))
 
@@ -234,7 +238,13 @@ class OptimizeDirectory(BaseCommand):
 class VideoOptimizer:
     """Handles video encoding operations using ffmpeg."""
 
-    def __init__(self, video_file: Path, optimize_dir: OptimizeDirectory) -> None:
+    def __init__(
+        self,
+        video_file: Path,
+        optimize_dir: "OptimizeDirectory",
+        overall_progress_id: TaskID,
+        completed_duration_of_previous_videos: float,
+    ) -> None:
         self.input_file = video_file
         self.crf = optimize_dir.crf
         self.downscale = optimize_dir.downscale
@@ -246,6 +256,12 @@ class VideoOptimizer:
         self.encoding_duration = 0.0
         self.disk_space_change = 0
         self.speed_factor = 0.0
+        self.progress = optimize_dir.ProgressBar
+        self.video_duration = get_video_duration(self.input_file)
+        self.task_id: TaskID = TaskID(0)
+        self.post_optimization_size: int = 0
+        self.overall_progress_id = overall_progress_id
+        self.completed_duration_of_previous_videos = completed_duration_of_previous_videos
 
     def _cleanup_existing_optimizing_file(self) -> None:
         """Delete existing .optimizing file if present."""
@@ -283,6 +299,8 @@ class VideoOptimizer:
             *["-c:s", "copy"],  # Copy subtitles "as is"
             *["-tag:v", "hvc1"],  # Apple compatibility
             *["-vf", ",".join(video_filters)],  # Combined video filters
+            *["-progress", "pipe:1"],  # Pipe progress to stdout
+            *["-nostats"],  # Disable default stats output
             *["-loglevel", "error"],  # Only log errors
             str(self.output_file),
         ]
@@ -291,8 +309,28 @@ class VideoOptimizer:
 
         start_time = time.perf_counter()
 
-        with DEBUG_LOG_FILE.open("a") as log_file:
-            subprocess.run(command, stdout=log_file, stderr=log_file, text=True, check=True)
+        with subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+            encoding="utf-8",
+        ) as process:
+            if process.stdout:
+                for line in process.stdout:
+                    logger.debug(line.strip())
+                    if "out_time_ms" in line:
+                        progress_data = {
+                            k.strip(): v.strip()
+                            for k, v in (item.split("=") for item in line.split("\n") if "=" in item)
+                        }
+                        out_time_ms = int(progress_data.get("out_time_ms", 0))
+                        current_video_completed_seconds = out_time_ms / 1_000_000
+                        self.progress.update(self.task_id, completed=current_video_completed_seconds)
+                        self.progress.update(
+                            self.overall_progress_id,
+                            completed=self.completed_duration_of_previous_videos + current_video_completed_seconds,
+                        )
 
         self.encoding_duration = time.perf_counter() - start_time
 
@@ -303,7 +341,7 @@ class VideoOptimizer:
             msg = "Optimized file not created."
             raise FileNotFoundError(msg)
 
-        self.post_optimization_size = self.output_file.stat().st_size
+        self.post_optimization_size = int(self.output_file.stat().st_size)
         self.disk_space_change = self.original_size - self.post_optimization_size
 
     def _rename_final_output(self) -> None:

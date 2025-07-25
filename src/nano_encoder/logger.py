@@ -13,25 +13,25 @@ class NanoEncoderLogger(logging.Logger):
             return " ".join(str(m) for m in msg)
         return str(msg)
 
-    def debug(self, msg: str | list[str], *args, **kwargs):
-        super().debug(self._stringify(msg), *args, **kwargs)
+    def debug(self, msg: str | list[str], *args: object, **kwargs: object) -> None:  # type: ignore[override]
+        super().debug(self._stringify(msg), *args, **kwargs)  # type: ignore[arg-type]
 
-    def info(self, msg: str | list[str], *args, **kwargs):
-        super().info(self._stringify(msg), *args, **kwargs)
+    def info(self, msg: str | list[str], *args: object, **kwargs: object) -> None:  # type: ignore[override]
+        super().info(self._stringify(msg), *args, **kwargs)  # type: ignore[arg-type]
 
-    def warning(self, msg: str | list[str], *args, **kwargs):
-        super().warning(self._stringify(msg), *args, **kwargs)
+    def warning(self, msg: str | list[str], *args: object, **kwargs: object) -> None:  # type: ignore[override]
+        super().warning(self._stringify(msg), *args, **kwargs)  # type: ignore[arg-type]
 
-    def error(self, msg: str | list[str], *args, **kwargs):
-        super().error(self._stringify(msg), *args, **kwargs)
+    def error(self, msg: str | list[str], *args: object, **kwargs: object) -> None:  # type: ignore[override]
+        super().error(self._stringify(msg), *args, **kwargs)  # type: ignore[arg-type]
 
-    def critical(self, msg: str | list[str], *args, **kwargs):
-        super().critical(self._stringify(msg), *args, **kwargs)
+    def critical(self, msg: str | list[str], *args: object, **kwargs: object) -> None:  # type: ignore[override]
+        super().critical(self._stringify(msg), *args, **kwargs)  # type: ignore[arg-type]
 
 
 # Configure logging
 logging.setLoggerClass(NanoEncoderLogger)
-logger: NanoEncoderLogger = logging.getLogger("NanoEncoder")
+logger: NanoEncoderLogger = logging.getLogger("NanoEncoder")  # type: ignore[assignment]
 logger.setLevel(logging.INFO)
 
 # File handler

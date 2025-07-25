@@ -19,7 +19,11 @@ classifiers = [
 ]
 requires-python = ">=3.13"
 
-dependencies = ["rich>=14.0.0", "send2trash>=1.8.3"]
+dependencies = [
+    "rich>=14.0.0",
+ "send2trash>=1.8.3",
+ "types-send2trash>=1.8.2.7",
+]
 
 [project.scripts]
 nen = "nano_encoder.nano_encoder:main"
@@ -54,3 +58,9 @@ fixable = ["ALL"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/nano_encoder/logger.py" = ["ANN002", "ANN003", "D102", "ANN201"]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.17.0",
+    "ruff>=0.12.4",
+]
