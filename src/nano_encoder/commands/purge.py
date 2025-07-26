@@ -10,10 +10,22 @@ from nano_encoder.utils import VIDEO_FILE_EXTENSIONS, find_all_video_files, has_
 
 from .base_command import BaseCommand
 
+# Constants for better maintainability
+OPTIMIZED_FILENAME_MARKER = "optimized"
+OPTIMIZING_FILENAME_MARKER = ".optimizing."
+
 
 @dataclass
 class PurgeArgs:
-    """Purge command args."""
+    """
+    Arguments for purge operations.
+
+    Attributes:
+        directory: Directory containing original videos to purge
+        permanent: Whether to permanently delete files instead of moving to trash
+        skip_confirmation: Whether to skip user confirmation prompt
+
+    """
 
     directory: Path
     permanent: bool = False
@@ -21,95 +33,220 @@ class PurgeArgs:
 
 
 def handle_purge_command(args: argparse.Namespace) -> None:
-    """Handle purge command and errors."""
+    """
+    Handle purge command execution with comprehensive error handling.
+
+    Args:
+        args: Parsed command line arguments containing purge parameters
+
+    Raises:
+        FileNotFoundError: If the specified directory doesn't exist
+        NotADirectoryError: If the path exists but isn't a directory
+        ValueError: If invalid arguments are provided
+
+    """
+    purge_args = PurgeArgs(
+        directory=args.directory,
+        permanent=args.permanent,
+        skip_confirmation=args.skip_confirmation,
+    )
+
     try:
-        PurgeDirectory(PurgeArgs(
-            directory=args.directory,
-            permanent=args.permanent,
-            skip_confirmation=args.skip_confirmation,
-        )).execute()
+        PurgeDirectory(purge_args).execute()
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
-        logger.error(str(e))
+        logger.error(f"Purge operation failed: {e}")
         raise
     except KeyboardInterrupt:
-        message = "User cancelled purge operation."
-        console.print(f"\n{message}\n")
+        message = "User cancelled purge operation"
+        console.print(f"\n[yellow]{message}[/]\n")
         logger.info(message)
-
+        raise
 
 
 class PurgeDirectory(BaseCommand):
-    """Encapsulates purge command functionally."""
+    """
+    Handles safe removal of original video files after successful optimization.
+
+    This class identifies original video files that have corresponding optimized
+    versions and can remove them either by moving to trash or permanent deletion,
+    with appropriate safety checks and user confirmation.
+    """
 
     def __init__(self, args: PurgeArgs) -> None:
+        """
+        Initialize purge operation with the provided arguments.
+
+        Args:
+            args: Configuration parameters for the purge process
+
+        """
         super().__init__(args.directory)
+
+        # Operation configuration
         self.permanent = args.permanent
         self.skip_confirmation = args.skip_confirmation
+
+        # File discovery
         self.original_files = self._find_original_files_to_purge()
 
     def execute(self) -> None:
-        """Execute the purge operation."""
+        """Execute the purge operation with safety checks and user confirmation."""
+        # Safety check: ensure no incomplete optimization operations
         if unfinished_video := self._has_unfinished_video():
-            console.print(
-                f"Encountered unfinished video: '{unfinished_video}', unable to purge originals. "
-                "Remove this file, or re-run the encode command against the directory to resolve.",
-            )
-            logger.error(f"Unfinished video: {unfinished_video.absolute()}")
-            console.print(f"\n[green]Suggested fix[/]:\nnen optimize {self.directory.absolute()}")
+            self._handle_unfinished_video_error(unfinished_video)
             return
 
+        # Check if there are files to purge
         if not self.original_files:
-            console.print(f"No originals with optimized versions found in '{self.directory.name}'")
+            console.print(f"No original files with optimized versions found in '{self.directory.name}'")
+            logger.info(f"No files to purge in '{self.directory.name}'")
             return
 
-        logger.info(f"Found the following to purge: {', '.join([p.name for p in self.original_files])}")
+        self._log_files_to_purge()
 
-        message = (
+        # Get user confirmation or proceed if skipping
+        if self._should_proceed_with_purge():
+            self._execute_purge_operation()
+
+    def _handle_unfinished_video_error(self, unfinished_video: Path) -> None:
+        """
+        Handle the case where unfinished optimization files are found.
+
+        Args:
+            unfinished_video: Path to the unfinished video file
+
+        """
+        console.print(
+            f"[red]Error:[/] Found unfinished optimization file: '{unfinished_video.name}'",
+        )
+        console.print(
+            "Cannot safely purge original files while optimization is incomplete.",
+        )
+        console.print(
+            "Please complete or remove the unfinished optimization before purging.",
+        )
+        console.print()
+        console.print("[green]Suggested fix:[/]")
+        console.print(f"  nen optimize {self.directory}")
+
+        logger.error(f"Unfinished optimization file prevents purge: {unfinished_video}")
+
+    def _log_files_to_purge(self) -> None:
+        """Log the files that will be purged for audit purposes."""
+        filenames = [file.name for file in self.original_files]
+        logger.info(f"Found {len(self.original_files)} files to purge: {', '.join(filenames)}")
+
+    def _should_proceed_with_purge(self) -> bool:
+        """
+        Determine if the purge operation should proceed.
+
+        Returns:
+            bool: True if operation should proceed, False otherwise
+
+        """
+        if self.skip_confirmation:
+            console.print("[red]Force mode enabled - skipping confirmation[/]")
+            return True
+
+        confirmation_message = (
             "Permanently delete these ORIGINAL files?"
             if self.permanent
-            else "Send these ORIGINAL files to recycling bin/trash?"
+            else "Send these ORIGINAL files to trash/recycling bin?"
         )
 
-        # Skip confirmation if flag is set, otherwise ask for confirmation
-        if self.skip_confirmation or self._confirm_purge(message):
-            if self.skip_confirmation:
-                console.print("[red]Forcefully purging")
-            self._purge_files()
+        return self._confirm_purge_with_preview(confirmation_message)
 
-    def _find_original_files_to_purge(self) -> list[Path]:
-        """Scan directory for candidate original video files to purge."""
-        console.print("Looking for original files with optimized files..")
-        candidates: list[Path] = []
-        for ext in VIDEO_FILE_EXTENSIONS:
-            candidates.extend(self.directory.rglob(f"*.{ext}"))
+    def _confirm_purge_with_preview(self, message: str) -> bool:
+        """
+        Show files to be purged and get user confirmation.
 
-        return [file for file in candidates if "optimized" not in file.name and has_optimized_version(file)]
+        Args:
+            message: Confirmation message to display
 
-    def _has_unfinished_video(self) -> Path | None:
-        """Check if there's any unfinished video in the directory."""
-        videos = find_all_video_files(self.directory)
-        for video in videos:
-            if ".optimizing." in video.name:
-                return video
-        return None
+        Returns:
+            bool: True if user confirms, False otherwise
 
-    def _confirm_purge(self, message: str) -> bool:
-        """Show files to be purged and confirm the operation."""
-        console.print(f"Found {len(self.original_files)} originals with optimized versions:")
-        for orig in self.original_files:
-            console.print(f" - {orig.name} → {orig.with_name(f'{orig.stem}.optimized{orig.suffix}').name}")
+        """
+        console.print(f"Found {len(self.original_files)} original(s) with optimized versions:")
+
+        for original in self.original_files:
+            optimized_name = f"{original.stem}.{OPTIMIZED_FILENAME_MARKER}{original.suffix}"
+            console.print(f" - {original.name} → {optimized_name}")
+
         console.print()
-
         return self._confirm_action(message)
 
-    def _purge_files(self) -> None:
-        """Delete or move files to trash based on permanent flag."""
-        for orig in self.original_files:
-            console.print(f"Deleting '{orig}'.")
-            logger.info(f"Purged '{orig}'.")
-            orig.unlink() if self.permanent else send2trash(orig)
+    def _execute_purge_operation(self) -> None:
+        """Perform the actual file deletion or trash operation."""
+        deletion_count = 0
 
-        purge_type_msg = "Permanently" if self.permanent else "Sent to recycling bin"
-        purged_message = f"Purged {len(self.original_files)} original files ({purge_type_msg})"
-        console.print(purged_message)
-        logger.info(purged_message)
+        for original_file in self.original_files:
+            try:
+                console.print(f"Removing '{original_file.name}'")
+
+                if self.permanent:
+                    original_file.unlink()
+                else:
+                    send2trash(str(original_file))
+
+                logger.info(f"Purged '{original_file.name}'")
+                deletion_count += 1
+
+            except (OSError, PermissionError) as e:
+                error_msg = f"Failed to remove '{original_file.name}': {e}"
+                logger.error(error_msg)
+                console.print(f"[red]Error: {error_msg}[/]")
+
+        self._log_completion_summary(deletion_count)
+
+    def _log_completion_summary(self, deletion_count: int) -> None:
+        """Log and display the purge operation summary."""
+        operation_type = "Permanently deleted" if self.permanent else "Moved to trash"
+
+        if deletion_count > 0:
+            summary_message = f"{operation_type} {deletion_count} original file(s)"
+            console.print(f"[green]{summary_message}[/]")
+            logger.info(summary_message)
+        else:
+            console.print("[yellow]No files were successfully removed[/]")
+
+    def _find_original_files_to_purge(self) -> list[Path]:
+        """
+        Scan directory for original video files that have optimized counterparts.
+
+        Returns:
+            list[Path]: List of original video files ready for purging
+
+        """
+        console.print("Scanning for original files with optimized versions..", end="")
+
+        # Collect all video files in directory
+        candidate_files: list[Path] = []
+        for ext in VIDEO_FILE_EXTENSIONS:
+            candidate_files.extend(self.directory.rglob(f"*.{ext}"))
+
+        # Filter to only original files that have optimized versions
+        original_files = [
+            file
+            for file in candidate_files
+            if OPTIMIZED_FILENAME_MARKER not in file.name and has_optimized_version(file)
+        ]
+
+        console.print(f" found [blue]{len(original_files)}[/] candidate(s)")
+        return original_files
+
+    def _has_unfinished_video(self) -> Path | None:
+        """
+        Check for any unfinished optimization operations in the directory.
+
+        Returns:
+            Path | None: Path to unfinished video file if found, None otherwise
+
+        """
+        all_videos = find_all_video_files(self.directory)
+
+        for video in all_videos:
+            if OPTIMIZING_FILENAME_MARKER in video.name:
+                return video
+
+        return None
