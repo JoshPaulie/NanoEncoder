@@ -13,6 +13,7 @@ from rich.progress import (
     TextColumn,
     TimeRemainingColumn,
 )
+from send2trash import send2trash
 
 from nano_encoder.console import console
 from nano_encoder.logger import logger
@@ -59,6 +60,8 @@ class OptimizeArgs:
         tune: Optimization tuning for specific content types
         force_encode: Re-encode videos even if already in h.265 format
         halt_on_increase: Stop optimization if file size increases
+        delete_after: Delete original file after successful optimization
+        untag_after: Remove '.optimized' from filename after optimization
 
     """
 
@@ -79,6 +82,8 @@ class OptimizeArgs:
     tune: Literal["animation", "grain", "stillimage", "fastdecode", "zerolatency"] | None = None
     force_encode: bool = False
     halt_on_increase: bool = False
+    delete_after: bool = False
+    untag_after: bool = False
 
 
 def handle_optimize_command(args: argparse.Namespace) -> None:
@@ -102,6 +107,8 @@ def handle_optimize_command(args: argparse.Namespace) -> None:
         tune=args.tune,
         force_encode=args.force_encode,
         halt_on_increase=args.halt_on_increase,
+        delete_after=args.delete_after,
+        untag_after=args.untag_after,
     )
 
     try:
@@ -151,6 +158,8 @@ class OptimizeDirectory(BaseCommand):
         self.tune = args.tune
         self.force_encode = args.force_encode
         self.halt_on_increase = args.halt_on_increase
+        self.delete_after = args.delete_after
+        self.untag_after = args.untag_after
 
         # Processing state tracking
         self.total_disk_space_change = 0
@@ -231,6 +240,13 @@ class OptimizeDirectory(BaseCommand):
 
             if self._should_halt_on_size_increase(optimizer, video):
                 return False
+
+            # Post-optimization actions
+            if self.delete_after:
+                self._delete_original_file(video)
+
+            if self.untag_after:
+                self._untag_optimized_file(optimizer.output_file)
 
             self.total_disk_space_change += optimizer.disk_space_change
 
@@ -370,6 +386,57 @@ class OptimizeDirectory(BaseCommand):
         time_left = videos_remaining * average_video_length
         time_remaining = time_left / (speed or 1)
         return humanize_duration(time_remaining)
+
+    def _delete_original_file(self, original_file: Path) -> None:
+        """
+        Delete the original video file after successful optimization.
+
+        Args:
+            original_file: Path to the original video file to delete
+
+        """
+        try:
+            send2trash(str(original_file))
+            logger.info(f"Deleted original file: {original_file.name}")
+            console.print(f"[yellow]Deleted original file: {original_file.name}[/]")
+        except OSError as e:
+            error_msg = f"Failed to delete original file '{original_file.name}': {e}"
+            logger.error(error_msg)
+            console.print(f"[red]Error: {error_msg}[/]")
+
+    def _untag_optimized_file(self, optimized_file: Path) -> None:
+        """
+        Remove '.optimized' from the optimized video filename.
+
+        Args:
+            optimized_file: Path to the optimized video file to untag
+
+        """
+        try:
+            # Generate untagged filename
+            untagged_name = optimized_file.with_name(
+                optimized_file.name.replace(".optimized", ""),
+            )
+
+            # Check if untagged file already exists
+            if untagged_name.exists():
+                logger.warning(
+                    f"Cannot untag '{optimized_file.name}': '{untagged_name.name}' already exists",
+                )
+                console.print(
+                    f"[yellow]Warning: Cannot untag '{optimized_file.name}': '{untagged_name.name}' already exists[/]",
+                )
+                return
+
+            # Rename the file
+            optimized_file.rename(untagged_name)
+            logger.info(f"Untagged file: {optimized_file.name} → {untagged_name.name}")
+            console.print(f"[blue]Untagged file: {optimized_file.name} → {untagged_name.name}[/]")
+
+        except OSError as e:
+            error_msg = f"Failed to untag file '{optimized_file.name}': {e}"
+            logger.error(error_msg)
+            console.print(f"[red]Error: {error_msg}[/]")
 
 
 class VideoOptimizer:

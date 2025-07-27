@@ -97,12 +97,23 @@ def add_optimize_parser(subparsers: argparse._SubParsersAction) -> None:
         action="store_true",
         help="Stop processing if any video's size increases after optimization",
     )
+    optimize_parser.add_argument(
+        "--delete-after",
+        action="store_true",
+        help="Delete the original video file after successful optimization",
+    )
+    optimize_parser.add_argument(
+        "--untag-after",
+        action="store_true",
+        help="Remove '.optimized' from the filename after optimization",
+    )
 
 
 def add_purge_parser(subparsers: argparse._SubParsersAction) -> None:
     """Add the 'purge' command parser."""
     purge_parser = subparsers.add_parser(
-        "purge", help="Purge (delete) original video files which have accompanying optimized version",
+        "purge",
+        help="Purge (delete) original video files which have accompanying optimized version",
     )
     purge_parser.add_argument("directory", type=Path, help="Path to the target directory")
     purge_parser.add_argument(
@@ -124,7 +135,8 @@ def add_purge_parser(subparsers: argparse._SubParsersAction) -> None:
 def add_health_parser(subparsers: argparse._SubParsersAction) -> None:
     """Add the 'health' command parser."""
     health_check_parser = subparsers.add_parser(
-        "health", help="After encoding, check the quality of your optimized files",
+        "health",
+        help="After encoding, check the quality of your optimized files",
     )
     health_check_parser.add_argument(
         "directory",
