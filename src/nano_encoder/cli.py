@@ -98,14 +98,11 @@ def add_optimize_parser(subparsers: argparse._SubParsersAction) -> None:
         help="Stop processing if any video's size increases after optimization",
     )
     optimize_parser.add_argument(
-        "--delete-after",
+        "--replace-after",
+        "--replace",
         action="store_true",
-        help="Delete the original video file after successful optimization",
-    )
-    optimize_parser.add_argument(
-        "--untag-after",
-        action="store_true",
-        help="Remove '.optimized' from the filename after optimization",
+        dest="replace_after",
+        help="Replace the original video file with the optimized version (recycle original; remove '.optimized' tag)",
     )
 
 

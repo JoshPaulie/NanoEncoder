@@ -60,8 +60,7 @@ class OptimizeArgs:
         tune: Optimization tuning for specific content types
         force_encode: Re-encode videos even if already in h.265 format
         halt_on_increase: Stop optimization if file size increases
-        delete_after: Delete original file after successful optimization
-        untag_after: Remove '.optimized' from filename after optimization
+        replace_after: Replace original file with optimized version (delete original and remove '.optimized' tag)
 
     """
 
@@ -82,8 +81,7 @@ class OptimizeArgs:
     tune: Literal["animation", "grain", "stillimage", "fastdecode", "zerolatency"] | None = None
     force_encode: bool = False
     halt_on_increase: bool = False
-    delete_after: bool = False
-    untag_after: bool = False
+    replace_after: bool = False
 
 
 def handle_optimize_command(args: argparse.Namespace) -> None:
@@ -107,8 +105,7 @@ def handle_optimize_command(args: argparse.Namespace) -> None:
         tune=args.tune,
         force_encode=args.force_encode,
         halt_on_increase=args.halt_on_increase,
-        delete_after=args.delete_after,
-        untag_after=args.untag_after,
+        replace_after=args.replace_after,
     )
 
     try:
@@ -158,8 +155,7 @@ class OptimizeDirectory(BaseCommand):
         self.tune = args.tune
         self.force_encode = args.force_encode
         self.halt_on_increase = args.halt_on_increase
-        self.delete_after = args.delete_after
-        self.untag_after = args.untag_after
+        self.replace_after = args.replace_after
 
         # Processing state tracking
         self.total_disk_space_change = 0
@@ -242,10 +238,9 @@ class OptimizeDirectory(BaseCommand):
                 return False
 
             # Post-optimization actions
-            if self.delete_after:
+            if self.replace_after:
                 self._delete_original_file(video)
-
-            if self.untag_after:
+                # Automatically untag when replacing original to replace it cleanly
                 self._untag_optimized_file(optimizer.output_file)
 
             self.total_disk_space_change += optimizer.disk_space_change
