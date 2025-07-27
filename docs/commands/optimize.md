@@ -35,6 +35,9 @@ nen optimize --preset ultrafast --tune animation "/media/series/Mob Psycho"
 
 # Force re-encode, regardless if video is already in h.265 or not.
 nen optimize --preset ultrafast --tune animation "/media/series/Mob Psycho"
+
+# Re-encode and immediately replace originals with optimized versions
+nen optimize --replace --crf 25 "/media/series/Mob Psycho"
 ```
 
 ### For shows
@@ -67,13 +70,24 @@ You can resize your videos to further decrease file sizes. This flag takes a wid
 ### `--halt-on-increase` flag (default: False)
 Stop the a directory if any video's output size is larger than its input size. This is useful as a size increases often means that the CRF value is too low for efficient compression.
 
+### `--replace-after` / `--replace` flag (default: False)
+Automatically replace the original video files with their optimized versions after processing. This flag combines the functionality of the [purge](purge.md) and [untag](untag.md) commands into the optimization process.
+
+When enabled, NanoEncoder will:
+1. Optimize videos as usual with `.optimized` tags
+2. After each video completes successfully, safely delete the original file (moved to trash/recycle bin)
+3. Remove the `.optimized` tag from the optimized file, effectively replacing the original
+
+{: .warning }
+This doesn't allow you to have a chance to use [`health`](health.md#health) subcommand.
+
 ---
 Full help output:
 ```
 usage: NanoEncoder optimize [-h] [--crf CRF] [--downscale DOWNSCALE]
                             [--preset {ultrafast,superfast,veryfast,faster,fast,medium,slow,slower,veryslow}]
                             [--tune {animation,grain,stillimage,fastdecode,zerolatency}]
-                            [--force] [--halt-on-increase]
+                            [--force] [--halt-on-increase] [--replace-after]
                             directory
 
 positional arguments:
@@ -94,5 +108,8 @@ options:
   --force               Force encode even if video is already in h.265 format
   --halt-on-increase    Stop processing if any video's size increases after
                         optimization
+  --replace-after, --replace
+                        Replace the original video file with the optimized
+                        version (delete original and remove '.optimized' tag)
 
 ```
