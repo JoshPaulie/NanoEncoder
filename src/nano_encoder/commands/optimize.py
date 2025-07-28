@@ -198,11 +198,19 @@ class OptimizeDirectory(BaseCommand):
                 total=total_duration,
             )
 
-            for video in self.video_files:
-                if not self._process_single_video(video, progress, overall_progress_id):
-                    break  # Halt on increase if configured
+            try:
+                for video in self.video_files:
+                    if not self._process_single_video(video, progress, overall_progress_id):
+                        break  # Halt on increase if configured
 
-            progress.update(overall_progress_id, description=f"[green]{self.directory.name}")
+                progress.update(overall_progress_id, description=f"[green]{self.directory.name}")
+
+            except KeyboardInterrupt:
+                # Handle interruption at batch level
+                progress.update(overall_progress_id, description=f"[red]Interrupted: {self.directory.name}")
+                console.print(f"\n[yellow]Optimization interrupted for '{self.directory.name}'[/]")
+                logger.warning(f"Batch optimization interrupted for directory: '{self.directory}'")
+                raise
 
     def _process_single_video(
         self,
@@ -245,8 +253,15 @@ class OptimizeDirectory(BaseCommand):
 
             self.total_disk_space_change += optimizer.disk_space_change
 
+        except KeyboardInterrupt:
+            # Handle interruption at video level - cleanup and re-raise
+            progress.update(task_id, description=f"[red]Interrupted: {video.name}")
+            logger.warning(f"Video optimization interrupted: '{video.name}'")
+            raise
+
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             logger.error(f"Failed to process '{video}': {e}")
+            progress.update(task_id, description=f"[red]Failed: {video.name}")
 
         # Update progress tracking
         video_duration = get_video_duration(video)
@@ -490,6 +505,15 @@ class VideoOptimizer:
             logger.info(f"Deleted partially completed file '{self.output_file.name}'.")
             self.output_file.unlink()
 
+    def _cleanup_partial_output(self) -> None:
+        """Clean up any partial output file created during interrupted encoding."""
+        if self.output_file.exists():
+            try:
+                logger.info(f"Cleaning up partial file '{self.output_file.name}' after interruption")
+                self.output_file.unlink()
+            except OSError as e:
+                logger.error(f"Failed to clean up partial file '{self.output_file.name}': {e}")
+
     def _create_optimizing_output_path(self) -> Path:
         """Create output path with 'optimizing' status marker."""
         return self.input_file.with_name(f"{self.input_file.stem}.optimizing{self.input_file.suffix}")
@@ -562,19 +586,86 @@ class VideoOptimizer:
         Args:
             command: The complete ffmpeg command to execute
 
+        Raises:
+            KeyboardInterrupt: Re-raised after cleanup if user interrupts
+            subprocess.CalledProcessError: If ffmpeg process fails
+
         """
-        with subprocess.Popen(
+        process = None
+        try:
+            process = self._start_ffmpeg_process(command)
+            self._process_ffmpeg_output(process)
+            self._validate_ffmpeg_completion(process, command)
+
+        except KeyboardInterrupt:
+            self._handle_keyboard_interrupt(process)
+            raise
+
+        except Exception as e:
+            self._handle_ffmpeg_error(process, e)
+            raise
+
+    def _start_ffmpeg_process(self, command: list[str]) -> subprocess.Popen:
+        """Start the FFmpeg subprocess."""
+        return subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             universal_newlines=True,
             encoding="utf-8",
-        ) as process:
-            if process.stdout:
-                for line in process.stdout:
-                    logger.debug(line.strip())
-                    if "out_time_ms" in line:
-                        self._update_progress_from_ffmpeg_output(line)
+        )
+
+    def _process_ffmpeg_output(self, process: subprocess.Popen) -> None:
+        """Process FFmpeg output for progress tracking."""
+        if process.stdout:
+            for line in process.stdout:
+                logger.debug(line.strip())
+                if "out_time_ms" in line:
+                    self._update_progress_from_ffmpeg_output(line)
+
+    def _validate_ffmpeg_completion(self, process: subprocess.Popen, command: list[str]) -> None:
+        """Validate that FFmpeg completed successfully."""
+        return_code = process.wait()
+        if return_code != 0:
+            error_msg = f"FFmpeg failed with return code {return_code} for '{self.input_file.name}'"
+            logger.error(error_msg)
+            raise subprocess.CalledProcessError(return_code, command)
+
+    def _handle_keyboard_interrupt(self, process: subprocess.Popen | None) -> None:
+        """Handle user interruption by terminating process and cleaning up."""
+        logger.warning(f"User interrupted encoding of '{self.input_file.name}'")
+
+        if process and process.poll() is None:  # Process is still running
+            self._terminate_ffmpeg_process(process)
+
+        self._cleanup_partial_output()
+
+    def _handle_ffmpeg_error(self, process: subprocess.Popen | None, error: Exception) -> None:
+        """Handle unexpected errors during FFmpeg execution."""
+        logger.error(f"Unexpected error during FFmpeg execution: {error}")
+
+        if process and process.poll() is None:
+            self._terminate_ffmpeg_process(process)
+
+        self._cleanup_partial_output()
+
+    def _terminate_ffmpeg_process(self, process: subprocess.Popen) -> None:
+        """Gracefully terminate FFmpeg process, with fallback to force kill."""
+        try:
+            # Attempt graceful termination first
+            process.terminate()
+
+            # Give process a moment to terminate gracefully
+            try:
+                process.wait(timeout=5)  # 5 second timeout
+            except subprocess.TimeoutExpired:
+                # Force kill if graceful termination fails
+                logger.warning(f"Force killing FFmpeg process for '{self.input_file.name}'")
+                process.kill()
+                process.wait()  # Ensure process is cleaned up
+
+        except (OSError, subprocess.SubprocessError) as e:
+            logger.error(f"Error terminating FFmpeg process: {e}")
 
     def _update_progress_from_ffmpeg_output(self, line: str) -> None:
         """
