@@ -33,13 +33,30 @@ uv tool install git+https://github.com/JoshPaulie/NanoEncoder.git
 Check out the [installation](https://bexli.dev/NanoEncoder/installation) page for more details.
 
 ## Usage
+
+### Preferred workflow
+
+1. **Test first**: Copy a small sample to a test directory and optimize it
+2. **Check quality**: Run a health check on the test results
+3. **Iterate if needed**: If quality isn't satisfactory, adjust settings and re-test
+4. **Scale up**: Once satisfied, delete test files and optimize your entire collection
+5. **Final steps**: Run health check, purge originals, and untag optimized files
+
 ```bash
 nen optimize '/media/series/The Office (US)' # Re-encode a directory with HEVC (h.265)
 nen health '/media/series/The Office (US)'  # Compare the original and optimized video files via SSIM
 nen purge '/media/series/The Office (US)'  # Safely remove original files (sends to trash)
 nen untag '/media/series/The Office (US)' # Remove the "tags" left behind by NanoEncoder
+```
 
-nen optimize --crf 23 '/media/series/Berserk (1997)' # Re-encode at specified CRF (Default is 28)
+### YOLO
+
+The "YOLO" workflow handles purging and untagging videos after successfully being optimized, but doesn't allow the user to perform a healthcheck prior to removing originals.
+
+This is great if you trust CRF to do a "good enough" job, or if you have limited disk space (i.e. you can't store both the original and optimizes versions at the same time)
+
+```sh
+nen optimize --replace '/media/series/The Office (US)' # Optimize with default CRF, but delete original and untag new files, effectively "replacing" the file with an HEVC version.
 ```
 
 ## Features
@@ -54,7 +71,7 @@ nen optimize --crf 23 '/media/series/Berserk (1997)' # Re-encode at specified CR
 ### Safety Measures
 - No silent deletions: `purge` requires explicit user confirmation, and sends originals to system recycling bin
 - Crash detection: Handles partially optimized files
-- Comprehensive logging: All operations are recorded in `~/NanoEncoder.log`, and FFmpeg logs are recorded in `~/NanoEncoder_ffmpeg.log`
+- Comprehensive logging: All operations are recorded in a log file (varying locations depending on OS)
 
 ## Contributing
 1. File an issue (optional)

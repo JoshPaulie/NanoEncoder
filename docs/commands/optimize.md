@@ -22,7 +22,7 @@ One should experiment with a small sample of videos (like if you're optimizing a
 nen optimize "/media/series/Mob Psycho"
 
 # Re-encode with default settings, but stop if any file size increases
-nen optimize --half-on-increase "/media/series/Mob Psycho"
+nen optimize --halt-on-increase "/media/series/Mob Psycho"
 
 # Re-encode with default settings, but downscale the resolution to 720p
 nen optimize --downscale 720 "/media/series/Mob Psycho"
