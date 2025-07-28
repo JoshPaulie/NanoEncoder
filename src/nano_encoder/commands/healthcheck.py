@@ -19,7 +19,7 @@ from rich.table import Table
 from rich.text import Text
 
 from nano_encoder.console import console
-from nano_encoder.logger import DEBUG_LOG_FILE, logger
+from nano_encoder.logger import FFMPEG_LOG_FILE, logger
 from nano_encoder.utils import find_all_video_files, get_video_resolution, has_optimized_version, humanize_file_size
 
 from .base_command import BaseCommand
@@ -132,7 +132,7 @@ class HealthChecker(BaseCommand):
         table.add_column("Optimized")
         table.add_column("SSIM")
         table.add_column("Size diff")
-        table.caption = f"Detailed logs available at {DEBUG_LOG_FILE.absolute()}"
+        table.caption = f"Detailed logs available at {FFMPEG_LOG_FILE.absolute()}"
         return table
 
     def execute(self) -> None:
@@ -360,7 +360,7 @@ class HealthChecker(BaseCommand):
             raise
 
         # Log the detailed output for debugging
-        with DEBUG_LOG_FILE.open("a", encoding="utf-8") as log_file:
+        with FFMPEG_LOG_FILE.open("a", encoding="utf-8") as log_file:
             log_file.write(f"\n=== SSIM Analysis: {original_file.name} vs {optimized_file.name} ===\n")
             log_file.write(process.stderr)
             log_file.write("\n" + "=" * 80 + "\n")
@@ -369,7 +369,7 @@ class HealthChecker(BaseCommand):
         matches = re.findall(FFMPEG_SSIM_PATTERN, process.stderr)
         if not matches:
             error_msg = "SSIM score not found in ffmpeg output"
-            logger.error(f"{error_msg}. Check {DEBUG_LOG_FILE} for details.")
+            logger.error(f"{error_msg}. Check {FFMPEG_LOG_FILE} for details.")
             raise ValueError(error_msg)
 
         return float(matches[-1])
