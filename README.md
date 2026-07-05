@@ -2,6 +2,11 @@
   <img src="imgs/Banner.png" width="600">
 </p>
 
+> [!important]
+> This project is superseded by [h265ify](https://github.com/joshpaulie/h265ify) :)
+> 
+> h265ify is a much cleaner, simpler, hardware-encoding supported, h265-only rewrite.
+
 # NanoEncoder
 A lightweight ffmpeg wrapper to reduce your video collection size (while preserving quality)
 
